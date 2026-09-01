@@ -299,8 +299,8 @@ function render() {
     if (visible(p) && !state.visits[p.id]) live.push(p);
   }
 
-  // an open door throws light — three soft passes stand in for a gradient
-  {
+  // an open door throws light — but only while she has asked to see it
+  if (state.onlyOpen) {
     // a halo four dot-widths across is weather, not a signal — keep it close in
     const RAD = [2.35, 1.75, 1.32], ALPHA = [.17, .25, .34], CAP = [15, 11, 8];
     for (let pass = 0; pass < 3; pass++) {
@@ -1231,7 +1231,7 @@ function paintChips() {
   // "everything" needs no icon — there is nothing to tell apart
   $('#chips').innerHTML =
     `<button class="chip ${all ? 'on' : ''}" data-f="all">${esc(T('g_all'))}</button>` +
-    `<div class="chipsep"></div>` +
+    `<div class="spacer"></div>` +
     `<button class="tog lamp ${state.onlyOpen ? 'on' : ''}" data-t="onlyOpen">${MARK.glow}${esc(T('f_open'))}</button>`;
   // the groups are labels; the trades belonging to them are the buttons
   // a loaf and a bonbon say "bread" and "sweets" in a sixth of the width
@@ -2614,7 +2614,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v27';
+const BUILD = 'v28';
 const BOOT_AT = Date.now();
 
 async function boot() {
