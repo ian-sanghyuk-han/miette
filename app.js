@@ -32,6 +32,7 @@ const state = {
   kinds: [true, true, true, true],
   onlyAward: false, onlyOpen: false, onlyIndie: false,
   onlyWish: false, onlyUnvisited: false,
+  awardComps: [], onlyWinner: false, onlyMulti: false,
   cx: 0, cy: 0, k: 0.3, kMin: 0.05, kMax: 7,
   here: null, sel: null, ready: false
 };
@@ -131,13 +132,29 @@ const ERRAND = [
 ];
 const COND = [
   { id: 'onlyOpen',      test: p => p.O === true },
-  { id: 'onlyAward',     test: p => !!p.aw },
+  { id: 'onlyAward',     test: p => awardOk(p) },
   { id: 'onlyIndie',     test: p => !p.b },
   { id: 'onlyWish',      test: p => !!state.wish[p.id] },
   { id: 'onlyUnvisited', test: p => !(state.visits[p.id] || []).length }
 ];
 
 const ofKind = p => state.kinds[p.k];
+
+/* The competitions are per-item, so "awarded" can be too. With nothing chosen it
+   means any placing; choose a contest and it means that contest. */
+function awardOk(p) {
+  if (!p.aw) return false;
+  let list = p.aw;
+  if (state.onlyWinner) list = list.filter(a => a.r === 1);
+  if (state.awardComps.length) list = list.filter(a => state.awardComps.indexOf(a.c) >= 0);
+  if (state.onlyMulti && p.aw.length < 2) return false;
+  return list.length > 0;
+}
+function compsInData() {
+  const n = {};
+  for (const p of state.places) for (const a of (p.aw || [])) n[a.c] = (n[a.c] || 0) + 1;
+  return Object.keys(n).sort((a, b) => n[b] - n[a]);
+}
 
 function visible(p) {
   if (!state.kinds[p.k]) return false;
@@ -278,12 +295,17 @@ function render() {
     ctx.strokeStyle = C.crustDeep; ctx.lineWidth = Math.min(1.6, r * .42);
     ctx.lineCap = 'round';
     ctx.beginPath();
+    const step = Math.max(1.7, r * .48);
     for (const p of live) {
       if (!p.aw) continue;
-      ctx.moveTo(p.sx - lr, p.sy - lr * .58);
-      ctx.quadraticCurveTo(p.sx - lr * 1.42, p.sy, p.sx - lr, p.sy + lr * .58);
-      ctx.moveTo(p.sx + lr, p.sy - lr * .58);
-      ctx.quadraticCurveTo(p.sx + lr * 1.42, p.sy, p.sx + lr, p.sy + lr * .58);
+      const layers = Math.min(p.aw.length, 3);
+      for (let j = 0; j < layers; j++) {
+        const R = lr + j * step;
+        ctx.moveTo(p.sx - R, p.sy - R * .58);
+        ctx.quadraticCurveTo(p.sx - R * 1.42, p.sy, p.sx - R, p.sy + R * .58);
+        ctx.moveTo(p.sx + R, p.sy - R * .58);
+        ctx.quadraticCurveTo(p.sx + R * 1.42, p.sy, p.sx + R, p.sy + R * .58);
+      }
     }
     ctx.globalAlpha = .85; ctx.stroke(); ctx.globalAlpha = 1;
 
@@ -923,6 +945,12 @@ function paintChips() {
   $('#chips').innerHTML = F.map(([v, l]) =>
     `<button class="chip ${cur === v ? 'on' : ''}" data-f="${v}">${esc(l)}</button>`).join('') +
     (cur === null ? `<button class="chip on" data-f="custom">${esc(T('g_custom'))}</button>` : '');
+  const TICK2 = `<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor"
+      stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-7"/></svg>`;
+  const R2 = [['onlyOpen', T('f_open')], ['onlyAward', awardChipLabel()], ['onlyIndie', T('f_indie')]];
+  $('#chips2').innerHTML = R2.map(([id, l]) =>
+    `<button class="tog ${state[id] ? 'on' : ''}" data-t="${id}">${state[id] ? TICK2 : ''}${esc(l)}</button>`).join('');
+
   const n = condCount();
   $('#filterLbl').textContent = T('f_cond');
   $('#filterBtn').classList.toggle('on', n > 0);
@@ -938,7 +966,30 @@ $('#chips').addEventListener('click', e => {
   setErrand(b.dataset.f);
   paintChips(); paintStrip(); render();
 });
+$('#chips2').addEventListener('click', e => {
+  const b = e.target.closest('.tog'); if (!b) return;
+  state[b.dataset.t] = !state[b.dataset.t];
+  if (b.dataset.t === 'onlyAward' && !state.onlyAward) {
+    state.awardComps = []; state.onlyWinner = false; state.onlyMulti = false;
+  }
+  paintChips(); paintStrip(); render();
+});
 $('#filterBtn').onclick = openFilters;
+
+function awardChipLabel() {
+  if (state.awardComps.length === 1) return compShort(state.awardComps[0]);
+  if (state.awardComps.length > 1) return T('f_award') + ' ' + state.awardComps.length;
+  if (state.onlyWinner) return T('f_winner');
+  if (state.onlyMulti) return T('f_multi');
+  return T('f_award');
+}
+function compShort(id) {
+  const c = state.comps[id];
+  if (!c) return id;
+  return (c.name[state.lang] || c.name.en || id)
+    .replace(/^(그랑파리 최고|일드프랑스 최고|Greater Paris Best|Île-de-France Best|Meilleure? |Trophée de la meilleure |Concours de la )/, '')
+    .replace(/ \(.*\)$/, '').trim();
+}
 
 const TICK = `<svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="#FCF8EE"
     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-7"/></svg>`;
@@ -1004,6 +1055,32 @@ function openFilters() {
     <div style="margin-top:4px">
       ${condRow('onlyOpen', T('f_open'), T('f_open_d'))}
       ${condRow('onlyAward', T('f_award'), T('f_award_d'))}
+      ${state.onlyAward ? `<div class="fsub" style="margin-top:2px;margin-bottom:10px">
+        <div style="font-size:10.5px;color:var(--mute);padding:7px 0 2px">${esc(T('f_award_by'))}</div>
+        <div class="frow" data-m="1" style="padding:8px 0">
+          <div class="fbox ${state.onlyMulti ? 'on' : ''}" style="width:19px;height:19px">${state.onlyMulti ? TICK : ''}</div>
+          <div style="flex:1 1 auto"><div class="fname" style="font-size:12.5px;font-weight:400">${esc(T('f_multi'))}</div>
+            <div class="fdesc" style="font-size:10px;margin-top:2px">${esc(T('f_multi_d'))}</div></div>
+          <div class="fcount">${base.filter(p => (p.aw || []).length >= 2).length}</div>
+        </div>
+        <div class="frow" data-w="1" style="padding:8px 0">
+          <div class="fbox ${state.onlyWinner ? 'on' : ''}" style="width:19px;height:19px">${state.onlyWinner ? TICK : ''}</div>
+          <div style="flex:1 1 auto"><div class="fname" style="font-size:12.5px;font-weight:400">${esc(T('f_winner'))}</div></div>
+          <div class="fcount">${base.filter(p => (p.aw || []).some(a => a.r === 1)).length}</div>
+        </div>
+        ${compsInData().map(id => {
+          const on = state.awardComps.indexOf(id) >= 0;
+          const n = base.filter(p => (p.aw || []).some(a => a.c === id &&
+            (!state.onlyWinner || a.r === 1))).length;
+          return `<div class="frow" data-ac="${esc(id)}" style="padding:8px 0">
+            <div class="fbox ${on ? 'on' : ''}" style="width:19px;height:19px">${on ? TICK : ''}</div>
+            <div style="flex:1 1 auto;min-width:0">
+              <div class="fname" style="font-size:12.5px;font-weight:400">${esc(compShort(id))}</div>
+              <div class="fdesc" style="font-size:10px;margin-top:2px">${esc(compFr(id))}</div>
+            </div>
+            <div class="fcount">${n}</div></div>`;
+        }).join('')}
+      </div>` : ''}
       ${condRow('onlyIndie', T('f_indie'), T('f_indie_d'))}
       ${condRow('onlyWish', T('wish'), T('f_wish_d'))}
       ${condRow('onlyUnvisited', T('f_unvisited'), T('f_unvisited_d'))}
@@ -1023,7 +1100,16 @@ function openFilters() {
     const e = ev.target.closest('[data-e]');
     const k = ev.target.closest('[data-k]');
     const c = ev.target.closest('[data-c]');
-    if (e) setErrand(e.dataset.e);
+    const ac = ev.target.closest('[data-ac]');
+    const w = ev.target.closest('[data-w]');
+    const m = ev.target.closest('[data-m]');
+    if (ac) {
+      const id = ac.dataset.ac, i = state.awardComps.indexOf(id);
+      if (i >= 0) state.awardComps.splice(i, 1); else state.awardComps.push(id);
+      state.onlyAward = true;
+    } else if (m) { state.onlyMulti = !state.onlyMulti; state.onlyAward = true; }
+    else if (w) { state.onlyWinner = !state.onlyWinner; state.onlyAward = true; }
+    else if (e) setErrand(e.dataset.e);
     else if (k) {
       const i = +k.dataset.k;
       const next = state.kinds.slice();
@@ -1035,6 +1121,7 @@ function openFilters() {
   };
   $('#fReset').onclick = () => {
     setErrand('all');
+    state.awardComps = []; state.onlyWinner = false; state.onlyMulti = false;
     COND.forEach(c => { state[c.id] = false; });
     paintChips(); paintStrip(); render(); openFilters();
   };
@@ -1123,6 +1210,11 @@ function openLegend() {
         <g fill="none" stroke="${C.crustDeep}" stroke-width="1.5" stroke-linecap="round">
         <path d="M7.4 8.6 Q3.6 13 7.4 17.4"/><path d="M22.6 8.6 Q26.4 13 22.6 17.4"/></g>
         <circle cx="15" cy="3.6" r="1.7" fill="${C.crustDeep}"/></svg>`, T('legend_award'))}
+      ${row(`<svg width="34" height="26" viewBox="0 0 34 26"><circle cx="17" cy="13" r="5" fill="${C.crust}"/>
+        <g fill="none" stroke="${C.crustDeep}" stroke-width="1.4" stroke-linecap="round">
+        <path d="M9.4 8.6 Q5.6 13 9.4 17.4"/><path d="M24.6 8.6 Q28.4 13 24.6 17.4"/>
+        <path d="M6.6 7.4 Q1.8 13 6.6 18.6"/><path d="M27.4 7.4 Q32.2 13 27.4 18.6"/></g>
+        <circle cx="17" cy="3.4" r="1.7" fill="${C.crustDeep}"/></svg>`, T('legend_multi'))}
       ${row(`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="5" fill="${C.crust}" opacity=".5"/>
         <circle cx="13" cy="13" r="9" fill="none" stroke="${C.olive}" stroke-width="1.8"/></svg>`, T('legend_wish'))}
       ${row(`<svg width="30" height="26" viewBox="0 0 30 26">
