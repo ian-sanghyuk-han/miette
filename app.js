@@ -761,6 +761,35 @@ function focusPlace(p, zoom) {
   clampView();
 }
 
+/* 75001 … 75020 — the arrondissement is the last two digits of the postcode */
+function postcode(a) { return '750' + String(a).padStart(2, '0'); }
+
+function addressLine(p) {
+  if (p.s) return p.n + ', ' + p.s + ', ' + postcode(p.a) + ' Paris';
+  return p.n + ', ' + postcode(p.a) + ' Paris (' + p.y + ', ' + p.x + ')';
+}
+
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* fall through to the old way */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);       // iOS wants the range spelled out
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch (e) { return false; }
+}
+
 function openPlace(p) {
   state.sel = p; render();
   const n = (state.visits[p.id] || []).length;
@@ -782,6 +811,12 @@ function openPlace(p) {
       <div>${p.a}${esc(T('arr_suffix'))}</div>
       ${p.s ? '<div class="dot"></div><div class="mono" style="font-size:10.5px;color:var(--ink2)">' + esc(p.s) + '</div>'
              : '<div class="dot"></div><div class="mono" style="font-size:10.5px;color:var(--mute)">' + esc(T('no_addr')) + '</div>'}
+      <button class="copy mono" id="doCopy">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="12" height="12" rx="2"/>
+          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        ${esc(T('copy'))}</button>
       ${p.b ? '<div class="dot"></div><div style="color:var(--mute)">' + esc(T('chain')) + '</div>' : ''}
     </div>
     ${aw.length ? `
@@ -871,6 +906,10 @@ function openPlace(p) {
     <button class="cta ghost" style="margin-top:9px" id="doBasket">${esc(T('i_edit'))}</button>
     <button class="cta ghost" style="margin-top:9px" id="doWish">${esc(state.wish[p.id] ? T('wish_remove') : T('wish_add'))}</button>
   `;
+  $('#doCopy').onclick = async () => {
+    const ok = await copyText(addressLine(p));
+    toast(ok ? T('copied') : T('copy_fail'));
+  };
   $('#placeSheet').querySelectorAll('[data-url]').forEach(b => {
     b.onclick = () => openExternal(b.dataset.url);
   });
@@ -2575,7 +2614,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v26';
+const BUILD = 'v27';
 const BOOT_AT = Date.now();
 
 async function boot() {
