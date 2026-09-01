@@ -20,7 +20,7 @@ const C = {
   ink: '#2A2118', ink2: '#544737', mute: '#6F6250', line: '#E2D6B9',
   faint: '#CFC0A0', crust: '#C4832E', crustDeep: '#8C5216',
   olive: '#77794F', seine: '#9DAEAC',
-  road: '#FBF6EA', roadEdge: '#E4D7B7', park: '#A8B183'
+  road: '#FDFAF3', roadEdge: '#DFCFA9', park: '#A8B183'
 };
 
 // one hue per trade — the map should say what a shop is before you read a word
@@ -136,7 +136,7 @@ function render() {
 
   // arrondissements — fill, then the visited ones over the top, then the outline
   ctx.beginPath(); state.paris.arr.forEach(a => ringPath(a.W));
-  ctx.fillStyle = C.paperDeep; ctx.globalAlpha = .55; ctx.fill(); ctx.globalAlpha = 1;
+  ctx.fillStyle = C.paperDeep; ctx.globalAlpha = .95; ctx.fill(); ctx.globalAlpha = 1;
 
   const done = arrDone();
   if (done.size) {
@@ -159,23 +159,26 @@ function render() {
   if (state.roads) {
     const WID = [
       Math.max(1.6, 7.5 * k), Math.max(1.0, 4.6 * k),
-      Math.max(0.7, 3.0 * k), Math.max(0.5, 2.0 * k)
+      Math.max(0.7, 3.0 * k), Math.max(0.5, 2.0 * k), Math.max(0.4, 1.5 * k)
     ];
-    const SHOW = [0, 0, .16, .34];              // a tier appears once it can be seen
+    const SHOW = [0, 0, .16, .30, .52];         // a tier appears once it can be seen
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    // the ring road gets a casing so the edge of Paris reads
-    if (k > .12) {
+    // a casing under the boulevards, so they read as avenues and not scratches
+    ctx.strokeStyle = C.roadEdge; ctx.globalAlpha = .75;
+    for (let t = 2; t >= 0; t--) {
+      if (k < SHOW[t]) continue;
       ctx.beginPath();
-      for (const w of state.roads[0]) { if (!onScreen(w)) continue; linePath(w.W); }
-      ctx.strokeStyle = C.roadEdge; ctx.lineWidth = WID[0] + 1.6;
-      ctx.globalAlpha = .7; ctx.stroke(); ctx.globalAlpha = 1;
+      for (const w of state.roads[t]) { if (!onScreen(w)) continue; linePath(w.W); }
+      ctx.lineWidth = WID[t] + Math.max(1, 1.4 * Math.min(k, 1.6));
+      ctx.stroke();
     }
-    for (let t = 3; t >= 0; t--) {
+    ctx.globalAlpha = 1;
+    for (let t = state.roads.length - 1; t >= 0; t--) {
       if (k < SHOW[t]) continue;
       ctx.beginPath();
       for (const w of state.roads[t]) { if (!onScreen(w)) continue; linePath(w.W); }
       ctx.strokeStyle = C.road; ctx.lineWidth = WID[t];
-      ctx.globalAlpha = t === 3 ? .8 : 1; ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.globalAlpha = t >= 3 ? .82 : 1; ctx.stroke(); ctx.globalAlpha = 1;
     }
   }
 

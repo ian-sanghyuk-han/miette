@@ -55,12 +55,17 @@ def span_m(pts):
     return math.hypot((max(xs) - min(xs)) * KX, max(ys) - min(ys)) * 111320
 
 
-TIER = {"motorway": 0, "trunk": 0, "primary": 1, "secondary": 2, "tertiary": 3}
-EPS = {0: 0.00010, 1: 0.00010, 2: 0.00012, 3: 0.00016}
-MINLEN = {0: 0, 1: 0, 2: 30, 3: 55}            # metres — drop the stubs
+TIER = {"motorway": 0, "trunk": 0, "primary": 1, "secondary": 2, "tertiary": 3,
+        "residential": 4, "unclassified": 4, "living_street": 4, "pedestrian": 4}
+EPS = {0: 0.00010, 1: 0.00010, 2: 0.00012, 3: 0.00016, 4: 0.00020}
+MINLEN = {0: 0, 1: 0, 2: 30, 3: 55, 4: 40}     # metres — drop the stubs
 
 raw = json.load(open(os.path.join(D, "_streets.json"), encoding="utf-8"))
-lines = {0: [], 1: [], 2: [], 3: []}
+try:
+    raw["elements"] += json.load(open(os.path.join(D, "_streets2.json"), encoding="utf-8"))["elements"]
+except IOError:
+    pass
+lines = {0: [], 1: [], 2: [], 3: [], 4: []}
 green = []
 kept_pts = 0
 
@@ -109,7 +114,7 @@ doc = {
     "v": 1,
     "q": 100000,
     "attribution": "© OpenStreetMap contributors — ODbL",
-    "tiers": [[pack(w) for w in lines[t]] for t in (0, 1, 2, 3)],
+    "tiers": [[pack(w) for w in lines[t]] for t in (0, 1, 2, 3, 4)],
     "green": [pack(w) for w in green],
 }
 path = os.path.join(D, "streets.json")
@@ -117,6 +122,6 @@ with open(path, "w", encoding="utf-8") as f:
     json.dump(doc, f, separators=(",", ":"))
 
 kb = os.path.getsize(path) / 1024
-print("tiers  %d / %d / %d / %d ways" % tuple(len(lines[t]) for t in (0, 1, 2, 3)))
+print("tiers  %d / %d / %d / %d / %d ways" % tuple(len(lines[t]) for t in (0, 1, 2, 3, 4)))
 print("green  %d shapes" % len(green))
 print("points %d   file %.0f KB" % (kept_pts, kb))
