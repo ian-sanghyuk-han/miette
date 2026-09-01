@@ -5,3 +5,4 @@ design/_mapfrag.json
 design/miette-screens.html
 .DS_Store
 Thumbs.db
+data/_addr*.json

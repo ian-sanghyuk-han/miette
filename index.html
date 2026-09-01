@@ -66,6 +66,17 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   border:1px solid var(--line);border-radius:16px;background:rgba(252,248,238,.9);
   color:var(--ink2);font-size:11.5px}
 #filterBtn.on{border-color:var(--crustDeep);color:var(--crustDeep);background:rgba(196,131,46,.12)}
+.tool.on{border-color:#D9962F;background:rgba(232,163,58,.18)}
+#search{position:fixed;inset:0;z-index:30;background:var(--paper);display:none;
+  flex-direction:column;padding-top:var(--safeT)}
+#search.on{display:flex}
+#searchTop{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+#searchIn{flex:1 1 auto;border:none;background:none;outline:none;font:inherit;font-size:16px;
+  color:var(--ink);padding:8px 0}
+#searchIn::placeholder{color:var(--faint)}
+#searchOut{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px calc(24px + var(--safeB))}
+.sres{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--divider);width:100%;text-align:left}
+.sres b{font-weight:600}
 #filterBtn b{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
   min-width:15px;height:15px;border-radius:8px;background:var(--crustDeep);color:var(--card);
   display:flex;align-items:center;justify-content:center;padding:0 4px}
@@ -159,10 +170,19 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 #toast.on{opacity:1;transform:translate(-50%,0)}
 
 #boot{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;
-  flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  opacity:1;transition:opacity .7s ease}
+#boot.fading{opacity:0}
 #boot.gone{display:none}
 #boot .ser{font-size:34px;font-weight:600;letter-spacing:9px}
-#boot p{font-size:12px;color:var(--mute);margin:0}
+#boot .inparis{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;
+  font-size:16px;color:var(--crustDeep);letter-spacing:1px;margin-top:2px}
+#boot p{font-size:11.5px;color:var(--mute);margin:14px 0 0}
+#bootArt{margin-bottom:22px}
+.riseA{animation:rise .9s ease both}
+.riseB{animation:rise .9s .12s ease both}
+.riseC{animation:rise .9s .24s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -194,6 +214,17 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg>
       </button>
+      <button class="tool" id="searchBtn" aria-label="search">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.6"
+             stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.8"/><path d="M15.5 15.5L21 21"/></svg>
+      </button>
+      <button class="tool" id="openBtn" aria-label="open now">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8.4 6.4c-.9-1 .5-1.9-.4-2.9M12 6.1c-.9-1 .5-1.9-.4-2.9M15.6 6.4c-.9-1 .5-1.9-.4-2.9"/>
+          <path d="M3.6 17.4c0-3.9 3.8-7 8.4-7s8.4 3.1 8.4 7z"/>
+          <path d="M2.6 17.4h18.8"/></svg>
+      </button>
       <button class="tool" id="legendBtn" aria-label="legend">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5"/><path d="M12 8h.01"/></svg>
@@ -216,9 +247,48 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 <section class="sheet" id="setSheet"></section>
 <div id="toast"></div>
 
+<div id="search">
+  <div id="searchTop">
+    <button id="searchBack" aria-label="back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.7"
+           stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <input id="searchIn" type="search" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button id="searchClear" aria-label="clear">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.7"
+           stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div id="searchOut"></div>
+</div>
+
 <div id="boot">
-  <div class="ser">MIETTE</div>
-  <p id="bootMsg">파리를 펴는 중</p>
+  <svg id="bootArt" class="riseA" width="220" height="160" viewBox="0 0 220 160" fill="none">
+    <g stroke="#8C5216" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M74 118 C 84 88, 92 70, 99 50"/>
+      <path d="M146 118 C 136 88, 128 70, 121 50"/>
+      <path d="M79 96 Q 110 84 141 96"/>
+      <path d="M84 90 H136"/>
+      <path d="M95 62 H125"/>
+      <path d="M99 50 L104 24 M121 50 L116 24"/>
+      <path d="M103 24 H117"/>
+      <path d="M104 24 L110 8 L116 24"/>
+      <path d="M110 8 V2"/>
+    </g>
+    <g stroke="#9DAEAC" stroke-width="4.5" stroke-linecap="round" opacity=".75">
+      <path d="M6 132 C 46 120, 76 142, 112 134 C 150 126, 178 144, 214 132"/>
+    </g>
+    <g stroke="#9DAEAC" stroke-width="1.2" stroke-linecap="round" opacity=".45">
+      <path d="M8 143 C 48 131, 78 153, 114 145 C 152 137, 180 155, 216 143"/>
+    </g>
+    <g fill="#C4832E" opacity=".85">
+      <circle cx="36" cy="120" r="3"/><circle cx="63" cy="127" r="3"/>
+      <circle cx="160" cy="130" r="3"/><circle cx="192" cy="123" r="3"/>
+    </g>
+  </svg>
+  <div class="ser riseB">MIETTE</div>
+  <div class="inparis riseB">in Paris</div>
+  <p id="bootMsg" class="riseC">파리를 펴는 중</p>
 </div>
 
 <input type="file" id="fileIn" accept="application/json,.json" hidden>

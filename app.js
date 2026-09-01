@@ -19,7 +19,7 @@ const C = {
   paper: '#F7F0DF', paperDeep: '#EFE4C9', card: '#FCF8EE',
   ink: '#2A2118', ink2: '#544737', mute: '#6F6250', line: '#E2D6B9',
   faint: '#CFC0A0', crust: '#C4832E', crustDeep: '#8C5216',
-  olive: '#77794F', seine: '#9DAEAC',
+  olive: '#77794F', seine: '#9DAEAC', glow: '#E8A33A',
   road: '#FDFAF3', roadEdge: '#DFCFA9', park: '#A8B183'
 };
 
@@ -257,6 +257,23 @@ function render() {
     if (x < -pad || x > VW + pad || y < -pad || y > VH + pad) continue;
     p.sx = x; p.sy = y; seen.push(p);
     if (visible(p) && !state.visits[p.id]) live.push(p);
+  }
+
+  // an open door throws light — two soft passes stand in for a gradient
+  if (r >= 1.8) {
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.beginPath();
+      let any = false;
+      for (const q of live) {
+        if (q.O !== true) continue;
+        any = true;
+        const R = r * (pass ? 1.9 : 3.1);
+        ctx.moveTo(q.sx + R, q.sy); ctx.arc(q.sx, q.sy, R, 0, 6.284);
+      }
+      if (!any) break;
+      ctx.fillStyle = C.glow; ctx.globalAlpha = pass ? .17 : .09; ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   }
 
   for (let kind = 0; kind < 4; kind++) {
@@ -674,7 +691,8 @@ function openPlace(p) {
     <div class="meta">
       <div>${esc(T('kind')[p.k])}</div><div class="dot"></div>
       <div>${p.a}${esc(T('arr_suffix'))}</div>
-      ${p.s ? '<div class="dot"></div><div class="mono" style="font-size:10.5px;color:var(--mute)">' + esc(p.s) + '</div>' : ''}
+      ${p.s ? '<div class="dot"></div><div class="mono" style="font-size:10.5px;color:var(--ink2)">' + esc(p.s) + '</div>'
+             : '<div class="dot"></div><div class="mono" style="font-size:10.5px;color:var(--mute)">' + esc(T('no_addr')) + '</div>'}
       ${p.b ? '<div class="dot"></div><div style="color:var(--mute)">' + esc(T('chain')) + '</div>' : ''}
     </div>
     ${aw.length ? `
@@ -717,6 +735,7 @@ function openPlace(p) {
     ${AWAY && hl.open !== null ? '<div class="mono" style="font-size:9.5px;color:var(--mute);margin-top:6px">' +
       esc(T('paris_time', parisClock())) + '</div>' : ''}
 
+    ${!p.s ? `<div class="small" style="margin-top:6px">${esc(T('no_addr_d'))}</div>` : ''}
     <div class="acts">
       ${p.t ? `<a class="act" href="tel:${esc(p.t.replace(/\s/g, ''))}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${C.ink2}" stroke-width="1.6" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.5 2.1L8.1 9.8a16 16 0 006 6l1.3-1.2a2 2 0 012.1-.5c.9.3 1.8.6 2.7.7a2 2 0 011.8 2.1z"/></svg>
@@ -912,8 +931,15 @@ function openSettings() {
       Ville de Paris — Licence Ouverte 2.0<br>
       Syndicat des Boulangers du Grand Paris<br>
       Grand Prix de la Baguette — Ville de Paris</div>
+    <div class="small">${esc(T('addr_note'))}</div>
     <div class="small">${esc(T('no_ads'))}</div>
-    <div style="border:1px solid var(--line);background:var(--paper);padding:11px 12px;margin-top:11px">
+    <div style="border:1px solid var(--line);background:var(--paper);padding:12px 13px;margin-top:11px">
+      ${[T('welcome_b1'), T('welcome_b2'), T('welcome_b3')].map(x => `
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px">
+          <svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="3" fill="${C.crust}"/></svg>
+          <div style="font-size:12px;color:var(--ink2)">${esc(x)}</div></div>`).join('')}
+    </div>
+    <div style="border:1px solid var(--line);background:var(--paper);padding:11px 12px;margin-top:9px">
       <div class="lbl">${esc(T('personal'))}</div>
       <div class="small" style="margin-top:5px">${esc(T('personal_note'))}</div>
     </div>
@@ -988,21 +1014,34 @@ function toast(msg) {
 }
 
 /* -------------------------------------------------------------- chrome */
+/* the same dots the map uses, so the row reads as its key */
+function kindDots(kinds, on) {
+  const r = 3.4, gap = 8.6, w = kinds.length * gap;
+  return `<svg width="${w}" height="9" viewBox="0 0 ${w} 9" style="flex:0 0 auto">
+    ${kinds.map((k, i) => `<circle cx="${(i * gap + r + .8).toFixed(1)}" cy="4.5" r="${r}"
+      fill="${on ? '#FCF8EE' : KIND[k]}" fill-opacity="${on ? .95 : 1}"/>`).join('')}</svg>`;
+}
+
 function paintChips() {
   const cur = errandNow();
-  const F = [['all', T('g_all')], ['bread', T('g_bread')], ['sweet', T('g_sweet')]];
-  $('#chips').innerHTML = F.map(([v, l]) =>
-    `<button class="chip ${cur === v ? 'on' : ''}" data-f="${v}">${esc(l)}</button>`).join('') +
+  const F = [['all', T('g_all'), [0, 1, 2, 3]],
+             ['bread', T('g_bread'), [0, 1]],
+             ['sweet', T('g_sweet'), [2, 3]]];
+  $('#chips').innerHTML = F.map(([v, l, ks]) =>
+    `<button class="chip ${cur === v ? 'on' : ''}" data-f="${v}"
+      style="display:flex;align-items:center;gap:6px">${kindDots(ks, cur === v)}${esc(l)}</button>`).join('') +
     (cur === null ? `<button class="chip on" data-f="custom">${esc(T('g_custom'))}</button>` : '');
   const TICK2 = `<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor"
       stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-7"/></svg>`;
-  const R2 = [['onlyOpen', T('f_open')], ['onlyAward', awardChipLabel()], ['onlyIndie', T('f_indie')]];
+  const R2 = [['onlyAward', awardChipLabel()], ['onlyIndie', T('f_indie')],
+              ['onlyWish', T('wish')]];
   $('#chips2').innerHTML = R2.map(([id, l]) =>
     `<button class="tog ${state[id] ? 'on' : ''}" data-t="${id}">${state[id] ? TICK2 : ''}${esc(l)}</button>`).join('');
 
   const n = condCount();
   $('#filterLbl').textContent = T('f_cond');
   $('#filterBtn').classList.toggle('on', n > 0);
+  paintOpenBtn();
   const badge = $('#filterBtn').querySelector('b');
   if (n) {
     if (badge) badge.textContent = n;
@@ -1051,7 +1090,7 @@ function openFilters() {
     <div class="frow" data-e="${e.id}">
       <div class="fbox rnd ${cur === e.id ? 'on' : ''}">${cur === e.id ? TICK : ''}</div>
       <div style="flex:1 1 auto;min-width:0">
-        <div class="fname">${esc(name)}</div>
+        <div class="fname" style="display:flex;align-items:center;gap:7px">${kindDots(e.kinds, false)}${esc(name)}</div>
         <div class="fdesc">${esc(desc)}</div>
       </div>
       <div class="fcount">${state.places.filter(p => e.kinds.includes(p.k)).length}</div>
@@ -1061,7 +1100,8 @@ function openFilters() {
     <div class="frow" data-k="${k}" style="padding:9px 0">
       <div class="fbox ${state.kinds[k] ? 'on' : ''}">${state.kinds[k] ? TICK : ''}</div>
       <div style="flex:1 1 auto;min-width:0">
-        <div class="fname" style="font-size:12.5px;font-weight:400">${esc(name)}</div>
+        <div class="fname" style="font-size:12.5px;font-weight:400;display:flex;align-items:center;gap:7px">
+          ${kindDots([k], false)}${esc(name)}</div>
       </div>
       <div class="fcount">${inKind(k)}</div>
     </div>`;
@@ -1222,11 +1262,16 @@ function setLang(l) {
   $('#bootMsg').textContent = T('loading');
   paintChips(); paintStrip(); paintTabs(); render();
 }
-$('#langbtn').onclick = openSettings;
+$('#langbtn').onclick = openLangs;
 $('#wordmark').onclick = openSettings;
 
 $('#zoomAll').onclick = () => { fitAll(); render(); };
 $('#legendBtn').onclick = openLegend;
+$('#openBtn').onclick = () => {
+  state.onlyOpen = !state.onlyOpen;
+  paintChips(); paintStrip(); render(); paintOpenBtn();
+};
+function paintOpenBtn() { $('#openBtn').classList.toggle('on', state.onlyOpen); }
 
 function openLegend() {
   const swatch = (i) => `<span style="display:inline-flex;width:14px;height:14px;border-radius:8px;background:${KIND[i]};flex:0 0 auto"></span>`;
@@ -2088,10 +2133,156 @@ function openRanking() {
 }
 
 /* -------------------------------------------------------------- first open */
+/* ------------------------------------------------------------------ search */
+const fold = str => (str || '')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+function buildIndex() {
+  for (const q of state.places) {
+    q.F = fold(q.n);
+    q.FS = fold(q.s);
+    q.FW = ' ' + q.F;                            // word starts, for cheap testing
+  }
+}
+
+function searchPlaces(raw, limit) {
+  const t = fold(raw);
+  if (!t) return [];
+  const parts = t.split(' ').filter(Boolean);
+  const out = [];
+  for (const q of state.places) {
+    let score = 0;
+    for (const w of parts) {
+      let sc = 0;
+      if (q.F.startsWith(w)) sc = 100;
+      else if (q.FW.indexOf(' ' + w) >= 0) sc = 70;
+      else if (q.F.indexOf(w) >= 0) sc = 40;
+      else if (q.FS && q.FS.indexOf(w) >= 0) sc = 25;
+      if (!sc) { score = -1; break; }
+      score += sc;
+    }
+    if (score <= 0) continue;
+    if (q.aw) score += 6;                        // a judged shop is likelier the one meant
+    if (state.visits[q.id]) score += 4;          // and so is one she has been to
+    out.push({ q, score });
+  }
+  out.sort((a, b) => b.score - a.score || a.q.n.length - b.q.n.length);
+  return out.slice(0, limit || 40).map(o => o.q);
+}
+
+function searchRow(q) {
+  const open = q.O === true;
+  return `<button class="sres" data-sid="${esc(q.id)}">
+    <svg width="14" height="14" viewBox="0 0 14 14" style="flex:0 0 auto">
+      ${open ? `<circle cx="7" cy="7" r="6.5" fill="${C.glow}" opacity=".28"/>` : ''}
+      <circle cx="7" cy="7" r="4" fill="${KIND[q.k]}" fill-opacity="${open ? 1 : .5}"/></svg>
+    <div style="flex:1 1 auto;min-width:0">
+      <div class="ser" style="font-size:15.5px;font-weight:600;line-height:1.2;
+           overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(q.n)}</div>
+      <div class="mono" style="font-size:10px;color:var(--mute);margin-top:3px;
+           overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(q.s || '')}${q.s ? ' · ' : ''}${q.a}e${open ? ' · ' + esc(T('s_open_now')) : ''}</div>
+    </div>
+    ${q.aw ? `<svg width="18" height="16" viewBox="0 0 18 16" style="flex:0 0 auto">
+      <g fill="none" stroke="${C.crustDeep}" stroke-width="1.3" stroke-linecap="round">
+      <path d="M5.2 4 Q1.8 8 5.2 12"/><path d="M12.8 4 Q16.2 8 12.8 12"/></g>
+      <circle cx="9" cy="8" r="2.6" fill="${C.crust}"/></svg>` : ''}
+    ${state.visits[q.id] ? `<svg width="15" height="15" viewBox="0 0 15 15" style="flex:0 0 auto">
+      <circle cx="7.5" cy="7.5" r="5" fill="${C.crust}"/>
+      <circle cx="7.5" cy="7.5" r="6.8" fill="none" stroke="${C.crustDeep}" stroke-width=".9" opacity=".5"/></svg>` : ''}
+  </button>`;
+}
+
+function paintSearch() {
+  const v = $('#searchIn').value;
+  const out = $('#searchOut');
+  if (!fold(v)) {
+    const picks = state.places.filter(q => q.aw && q.aw.length >= 2).slice(0, 8);
+    out.innerHTML = `<div class="lbl" style="margin:16px 0 2px">${esc(T('s_hint'))}</div>` +
+      picks.map(searchRow).join('');
+  } else {
+    const hits = searchPlaces(v);
+    out.innerHTML = hits.length
+      ? `<div class="lbl" style="margin:16px 0 2px">${esc(T('s_count', hits.length))}</div>` +
+        hits.map(searchRow).join('')
+      : `<div style="text-align:center;padding:48px 0 20px">
+          <div style="font-size:13px;font-weight:600">${esc(T('s_none'))}</div>
+          <div style="font-size:11.5px;color:var(--mute);margin-top:6px;line-height:1.55">${esc(T('s_none_d'))}</div></div>`;
+  }
+}
+
+function openSearch() {
+  $('#searchIn').placeholder = T('s_ph');
+  $('#search').classList.add('on');
+  paintSearch();
+  setTimeout(() => $('#searchIn').focus(), 60);
+}
+function closeSearch() { $('#search').classList.remove('on'); }
+
+$('#searchBtn').onclick = openSearch;
+$('#searchBack').onclick = closeSearch;
+$('#searchClear').onclick = () => { $('#searchIn').value = ''; paintSearch(); $('#searchIn').focus(); };
+$('#searchIn').addEventListener('input', paintSearch);
+$('#searchIn').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const first = $('#searchOut').querySelector('[data-sid]');
+  if (first) first.click();
+});
+$('#searchOut').addEventListener('click', e => {
+  const b = e.target.closest('[data-sid]'); if (!b) return;
+  const q = state.byId[b.dataset.sid]; if (!q) return;
+  closeSearch();
+  state.cx = q.WX; state.cy = q.WY; state.k = Math.max(state.k, 1.4);
+  clampView(); render(); openPlace(q);
+});
+
+/* ------------------------------------------------------------- the language */
+function openLangs() {
+  $('#setSheet').onclick = null;
+  $('#setSheet').innerHTML = `
+    <div class="grip"></div>
+    <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('language'))}</div>
+    <div class="seg" style="margin-top:14px">
+      ${['ko', 'en', 'fr'].map(l => `<button data-l="${l}" class="${l === state.lang ? 'on' : ''}">${esc(window.I18N[l].lang)}</button>`).join('')}
+    </div>
+    <div class="small">${esc(T('proper_note'))}</div>
+    <button class="cta ghost" style="margin-top:16px" id="toSettings">${esc(T('settings'))}</button>`;
+  $('#setSheet').querySelectorAll('[data-l]').forEach(b => {
+    b.onclick = () => { setLang(b.dataset.l); openLangs(); };
+  });
+  $('#toSettings').onclick = openSettings;
+  show('setSheet');
+}
+
+/* Paris as it actually is — the outer edge of the twenty rings, plus the river. */
+function parisSilhouette(w, h) {
+  const arr = state.paris.arr, water = state.paris.water;
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  arr.forEach(a => {
+    for (let i = 0; i < a.W.length; i += 2) {
+      if (a.W[i] < x0) x0 = a.W[i]; if (a.W[i] > x1) x1 = a.W[i];
+      if (a.W[i + 1] < y0) y0 = a.W[i + 1]; if (a.W[i + 1] > y1) y1 = a.W[i + 1];
+    }
+  });
+  const pad = 6;
+  const k = Math.min((w - pad * 2) / (x1 - x0), (h - pad * 2) / (y1 - y0));
+  const ox = (w - (x1 - x0) * k) / 2 - x0 * k;
+  const oy = (h - (y1 - y0) * k) / 2 - y0 * k;
+  const d = flat => {
+    let out = '';
+    for (let i = 0; i < flat.length; i += 2) {
+      out += (i ? 'L' : 'M') + (flat[i] * k + ox).toFixed(1) + ' ' + (flat[i + 1] * k + oy).toFixed(1);
+    }
+    return out + 'Z';
+  };
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <g fill="${C.paperDeep}" opacity=".9">${arr.map(a => `<path d="${d(a.W)}"/>`).join('')}</g>
+    <g fill="${C.seine}" opacity=".55">${water.filter(x => x.length > 40).map(x => `<path d="${d(x)}"/>`).join('')}</g>
+    <g fill="none" stroke="${C.line}" stroke-width=".8">${arr.map(a => `<path d="${d(a.W)}"/>`).join('')}</g>
+  </svg>`;
+}
+
 function openWelcome() {
-  const bullet = t => `<div style="display:flex;align-items:center;gap:9px;margin-top:8px">
-    <svg width="13" height="13" viewBox="0 0 14 14"><circle cx="7" cy="7" r="3.2" fill="${C.crust}"/></svg>
-    <div style="font-size:12px;color:var(--ink2)">${esc(t)}</div></div>`;
   $('#stampSheet').innerHTML = `
     <div class="grip"></div>
     <div style="text-align:center;padding-top:6px">
@@ -2099,15 +2290,21 @@ function openWelcome() {
         <g stroke="${C.crust}" stroke-width="3.4" stroke-linecap="round">
           <path d="M9 15L18 5"/><path d="M22.5 16.4L31.5 6.4"/><path d="M36 15L45 5"/></g></svg>
       <div class="ser" style="font-size:32px;font-weight:600;letter-spacing:9px;margin-top:14px">MIETTE</div>
-      <div class="ser" style="font-style:italic;font-size:14px;color:var(--mute);margin-top:4px">${esc(T('tagline'))}</div>
+      <div class="ser" style="font-style:italic;font-size:15px;color:${C.crustDeep};letter-spacing:1px;margin-top:2px">in Paris</div>
+      <div class="ser" style="font-style:italic;font-size:14px;color:var(--mute);margin-top:5px">${esc(T('tagline'))}</div>
+      <div style="display:flex;justify-content:center;margin-top:16px">${parisSilhouette(300, 158)}</div>
     </div>
     <div class="rule" style="margin:20px 0 16px"></div>
     <div style="font-size:13.5px;line-height:1.65">${esc(T('welcome_hi'))}</div>
     <div style="font-size:13.5px;line-height:1.65;margin-top:6px;color:var(--ink2)">${esc(T('welcome_1'))}</div>
-    <div class="ser" style="font-style:italic;font-size:14.5px;color:var(--ink2);white-space:pre-line;margin-top:16px;line-height:1.5">${esc(T('welcome_2'))}</div>
-    <div style="margin-top:18px">${bullet(T('welcome_b1'))}${bullet(T('welcome_b2'))}${bullet(T('welcome_b3'))}</div>
-    <button class="cta" style="margin-top:22px" id="welcomeGo">${esc(T('welcome_go'))}</button>
-    <div class="ser" style="font-style:italic;font-size:12.5px;color:var(--mute);text-align:center;margin-top:20px;line-height:1.5">${esc(T('dedication'))}</div>`;
+    <div class="ser" style="font-style:italic;font-size:15px;color:var(--ink2);white-space:pre-line;margin-top:16px;line-height:1.5">${esc(T('welcome_2'))}</div>
+    <div style="text-align:center;margin:26px 0 4px">
+      <svg width="34" height="12" viewBox="0 0 34 12" style="opacity:.5">
+        <g stroke="${C.crust}" stroke-width="2" stroke-linecap="round">
+          <path d="M6 9L11 3"/><path d="M14.5 9.8L19.5 3.8"/><path d="M23 9L28 3"/></g></svg>
+      <div class="ser" style="font-style:italic;font-size:14.5px;color:${C.crustDeep};margin-top:10px;line-height:1.55">${esc(T('dedication'))}</div>
+    </div>
+    <button class="cta" style="margin-top:24px" id="welcomeGo">${esc(T('welcome_go'))}</button>`;
   $('#welcomeGo').onclick = () => { state.meta.seen = Date.now(); saveRecords(); closeSheets(); };
   show('stampSheet');
 }
@@ -2173,6 +2370,7 @@ async function boot() {
     y0 = Math.min(y0, p.WY); y1 = Math.max(y1, p.WY);
   }
   state.bounds = { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
+  buildIndex();
   refreshHours();
   setInterval(() => { refreshHours(); if (state.ready) render(); }, 60000);
   (comps.competitions || []).forEach(c => { state.comps[c.id] = c; });
@@ -2187,7 +2385,8 @@ async function boot() {
   $('#langbtn').textContent = state.lang.toUpperCase();
   $('#tagline').textContent = T('tagline');
   clampView(); render();
-  $('#boot').classList.add('gone');
+  $('#boot').classList.add('fading');
+  setTimeout(() => $('#boot').classList.add('gone'), 760);
   if (!state.meta.seen) setTimeout(openWelcome, 380);
 
   try {
