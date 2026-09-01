@@ -898,11 +898,28 @@ function openPlace(p) {
       </div>` : ''}
 
     <div class="rule"></div>
-    <div style="display:flex;align-items:center;gap:9px">
-      ${hl.open === null ? '' :
-        '<div style="width:7px;height:7px;border-radius:4px;background:' + (hl.open ? C.olive : C.faint) + '"></div>'}
-      <div style="font-size:12.5px;font-weight:500">${esc(hl.open === null ? T('no_hours') : hl.open ? T('open_now') : T('closed_now'))}</div>
-      ${hl.open === null ? '' : '<div class="mono" style="font-size:10.5px;color:var(--mute)">' + esc(hl.text) + '</div>'}
+    <div style="display:flex;align-items:center;gap:10px">
+      ${(() => {
+        // the same lamp the map lights, always on the card — it is a fact about
+        // the shop, not a layer she switched on
+        if (hl.open === true) return `<div style="display:flex;align-items:center;gap:7px;
+          height:32px;padding:0 13px;border-radius:999px;background:${C.glow};color:#FCF8EE;
+          font-size:12.5px;font-weight:600;box-shadow:0 1px 8px rgba(217,150,47,.35)">
+          <svg width="14" height="14" viewBox="0 0 16 16" style="flex:0 0 auto">
+            <circle cx="8" cy="8" r="7" fill="#FCF8EE" opacity=".32"/>
+            <circle cx="8" cy="8" r="3.4" fill="#FCF8EE"/></svg>
+          ${esc(T('open_now'))}<span style="font-family:'IBM Plex Mono',monospace;font-weight:400;
+            opacity:.9;font-size:11px">${esc(hl.text)}</span></div>`;
+        if (hl.open === false) return `<div style="display:flex;align-items:center;gap:7px;
+          height:32px;padding:0 13px;border-radius:999px;border:1px solid var(--line);
+          background:var(--paper);color:var(--mute);font-size:12.5px">
+          <svg width="14" height="14" viewBox="0 0 16 16" style="flex:0 0 auto">
+            <circle cx="8" cy="8" r="4.4" fill="none" stroke="${C.faint}" stroke-width="2"/></svg>
+          ${esc(T('closed_now'))}<span style="font-family:'IBM Plex Mono',monospace;font-size:11px">${esc(hl.text)}</span></div>`;
+        return `<div style="display:flex;align-items:center;gap:7px;height:32px;padding:0 13px;
+          border-radius:999px;border:1px dashed var(--faint);color:var(--mute);font-size:12px">
+          ${esc(T('no_hours'))}</div>`;
+      })()}
       <div style="flex:1 1 auto"></div>
       ${hl.off ? '<div class="mono" style="font-size:10.5px;color:var(--mute)">' + esc(hl.off) + '</div>' : ''}
     </div>
@@ -2616,7 +2633,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v42';
+const BUILD = 'v43';
 const BOOT_AT = Date.now();
 
 async function boot() {
