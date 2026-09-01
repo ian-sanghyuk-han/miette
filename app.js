@@ -28,7 +28,8 @@ const KIND = ['#C4832E', '#A65B72', '#6E4A34', '#8E7098'];
 
 const state = {
   lang: 'ko', paris: null, places: [], comps: {},
-  visits: {}, wish: {}, meta: {},
+  visits: {}, wish: {}, meta: {}, verdict: {}, duels: [], items: {},
+  diaryView: 'time', rankKind: 'all',
   kinds: [true, true, true, true],
   onlyAward: false, onlyOpen: false, onlyIndie: false,
   onlyWish: false, onlyUnvisited: false,
@@ -70,10 +71,15 @@ async function loadRecords() {
     state.visits = (await DB.get('visits')) || {};
     state.wish = (await DB.get('wish')) || {};
     state.meta = (await DB.get('meta')) || {};
+    state.verdict = (await DB.get('verdict')) || {};
+    state.duels = (await DB.get('duels')) || [];
+    state.items = (await DB.get('items')) || {};
   } catch (e) { /* private mode or blocked storage — run without a record */ }
 }
 const saveRecords = () => Promise.all([
-  DB.set('visits', state.visits), DB.set('wish', state.wish), DB.set('meta', state.meta)
+  DB.set('visits', state.visits), DB.set('wish', state.wish), DB.set('meta', state.meta),
+  DB.set('verdict', state.verdict), DB.set('duels', state.duels),
+  DB.set('items', state.items)
 ]).catch(() => {});
 
 /* ---------------------------------------------------------------- geometry */
@@ -729,7 +735,9 @@ function openPlace(p) {
       <div style="flex:1 1 auto">
         <div class="lbl">${esc(T('mine'))}</div>
         <div style="font-size:12px;color:var(--mute);margin-top:5px">
-          ${n ? esc(T('stamped_n', n)) + ' · ' + esc(T('visited_on', fmtDate(state.visits[p.id][n - 1]))) : esc(T('not_yet'))}
+          ${n ? esc(T('stamped_n', n)) + ' · ' + esc(T('visited_on', fmtDate(state.visits[p.id][n - 1]))) +
+                (state.verdict[p.id] !== undefined ? ' · ' + esc(T(VKEY[state.verdict[p.id]])) : '')
+              : esc(T('not_yet'))}
         </div>
       </div>
       <button class="cta" style="width:auto;padding:0 20px" id="doStamp">
@@ -737,9 +745,21 @@ function openPlace(p) {
         <span>${esc(T('stamp'))}</span>
       </button>
     </div>
+    ${itemsOf(p.id).length ? `<div style="margin-top:12px">
+      ${itemsOf(p.id).slice().reverse().slice(0, 6).map(it => `
+        <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--divider)">
+          ${breadIcon(it.b, 18, C.ink2)}
+          <div class="ser" style="flex:1 1 auto;font-size:14px;font-weight:600;min-width:0">${esc(BREAD[it.b] ? BREAD[it.b].fr : it.b)}</div>
+          ${it.n ? `<div style="font-size:10.5px;color:var(--mute);flex:1 1 auto;min-width:0;overflow:hidden;
+            text-overflow:ellipsis;white-space:nowrap">${esc(it.n)}</div>` : ''}
+          ${it.p ? `<div class="mono" style="font-size:11.5px;color:${C.crustDeep};flex:0 0 auto">${eur(it.p)}</div>` : ''}
+        </div>`).join('')}
+    </div>` : ''}
+    <button class="cta ghost" style="margin-top:9px" id="doBasket">${esc(T('i_edit'))}</button>
     <button class="cta ghost" style="margin-top:9px" id="doWish">${esc(state.wish[p.id] ? T('wish_remove') : T('wish_add'))}</button>
   `;
   $('#doStamp').onclick = () => stamp(p);
+  const bb = $('#doBasket'); if (bb) bb.onclick = () => openBasket(p);
   $('#doWish').onclick = () => {
     if (state.wish[p.id]) delete state.wish[p.id]; else state.wish[p.id] = 1;
     saveRecords(); render(); openPlace(p);
@@ -784,11 +804,30 @@ function stamp(p) {
         <div class="body" style="margin-top:4px;white-space:pre-line">${esc(T('stamp_overlap_sub'))}</div>
       </div>
     </div>
-    <button class="cta" style="margin-top:18px" id="stampDone">${esc(T('done'))}</button>
+    <div class="rule"></div>
+    <div class="lbl">${esc(T('v_ask'))}</div>
+    <div style="display:flex;gap:7px;margin-top:9px">
+      ${[[2, T('v_again')], [1, T('v_ok')], [0, T('v_once')]].map(([v, l]) => `
+        <button class="cta ${state.verdict[p.id] === v ? '' : 'ghost'}" data-v="${v}"
+          style="flex:1 1 0;height:48px;font-size:12.5px">${esc(l)}</button>`).join('')}
+    </div>
+    <button class="cta" style="margin-top:14px" id="goBasket">${esc(T('i_ask'))}</button>
+    <button class="cta ghost" style="margin-top:8px" id="stampDone">${esc(T('later'))}</button>
   `;
+  $('#goBasket').onclick = () => openBasket(p);
+  $('#stampSheet').querySelectorAll('[data-v]').forEach(b => {
+    b.onclick = () => { state.verdict[p.id] = +b.dataset.v; saveRecords(); stampRefresh(p); };
+  });
   $('#stampDone').onclick = closeSheets;
   show('stampSheet');
   if (navigator.vibrate) try { navigator.vibrate(18); } catch (e) {}
+}
+
+// re-paint the sheet in place, without adding another stamp
+function stampRefresh(p) {
+  const n = (state.visits[p.id] || []).length;
+  state.visits[p.id].pop();
+  stamp(p);
 }
 
 function stampSVG(p, n) {
@@ -898,7 +937,8 @@ function openSettings() {
 async function exportRecords() {
   const payload = {
     app: 'miette', v: 1, exported: new Date().toISOString(),
-    visits: state.visits, wish: state.wish
+    visits: state.visits, wish: state.wish,
+    verdict: state.verdict, duels: state.duels, items: state.items
   };
   const text = JSON.stringify(payload, null, 1);
   const name = 'miette-' + new Date().toISOString().slice(0, 10) + '.json';
@@ -926,6 +966,15 @@ $('#fileIn').addEventListener('change', async e => {
       n += ts.length;
     }
     Object.assign(state.wish, d.wish || {});
+    Object.assign(state.verdict, d.verdict || {});
+    for (const [id, list] of Object.entries(d.items || {})) {
+      const cur = state.items[id] || (state.items[id] = []);
+      list.forEach(it => { if (!cur.some(c => c.t === it.t)) cur.push(it); });
+    }
+    (d.duels || []).forEach(x => {
+      if (Array.isArray(x) && x.length === 2 &&
+          !state.duels.some(y => y[0] === x[0] && y[1] === x[1])) state.duels.push(x);
+    });
     await saveRecords(); render(); paintStrip(); openSettings();
     toast(T('imported', n));
   } catch (err) { toast(T('import_bad')); }
@@ -1157,7 +1206,7 @@ $('#tabs').addEventListener('click', e => {
   if (t === 'map') closeSheets();
   else if (t === 'log') openLog();
   else if (t === 'trail') openTrail();
-  else openRanking();
+  else { state.diaryView = 'rank'; openLog(); }
 });
 function backToMap() {
   closeSheets();
@@ -1260,8 +1309,341 @@ $('#locate').onclick = () => {
 };
 
 
+/* ------------------------------------------------------------- what she ate */
+const BREADS = [
+  ['baguette', 'baguette',
+   '<g transform="rotate(-38 12 12)"><ellipse cx="12" cy="12" rx="3.5" ry="9.2"/><path d="M9.8 7.6l4.4-1.4M9.6 11.8l4.6-1.4M9.8 16l4.4-1.4"/></g>'],
+  ['croissant', 'croissant',
+   '<path d="M3.6 15.8c0-5.5 3.8-9.4 8.4-9.4s8.4 3.9 8.4 9.4c-1.8-2.5-4.6-3.9-8.4-3.9s-6.6 1.4-8.4 3.9z"/><path d="M3.6 15.8c-.9-.2-1.2-1.4-.5-2.1M20.4 15.8c.9-.2 1.2-1.4.5-2.1"/>'],
+  ['painchoc', 'pain au chocolat',
+   '<rect x="3.5" y="7.5" width="17" height="9" rx="2.2"/><path d="M8.4 7.5v9M15.6 7.5v9"/>'],
+  ['flan', 'flan',
+   '<path d="M4 10.5h16V15a3.2 3.2 0 01-3.2 3.2H7.2A3.2 3.2 0 014 15z"/><path d="M4 10.5c0-2.2 3.6-4 8-4s8 1.8 8 4"/>'],
+  ['galette', 'galette des rois',
+   '<circle cx="12" cy="12" r="8.2"/><path d="M12 3.8c2.6 2.8 2.6 5.6 0 8.2M12 20.2c-2.6-2.8-2.6-5.6 0-8.2"/><path d="M3.8 12c2.8-2.6 5.6-2.6 8.2 0M20.2 12c-2.8 2.6-5.6 2.6-8.2 0"/>'],
+  ['eclair', 'éclair',
+   '<rect x="2.6" y="9" width="18.8" height="6" rx="3"/><path d="M5.4 10.8h13.2"/>'],
+  ['chausson', 'chausson aux pommes',
+   '<path d="M3.8 17.2a8.2 8.2 0 0116.4 0z"/><path d="M3.8 17.2q2-1.5 4.1 0t4.1 0 4.1 0 4.1 0"/><path d="M9 12.2l2.6-2.4M13 13l2.6-2.4"/>'],
+  ['campagne', 'pain de campagne',
+   '<circle cx="12" cy="12" r="8.2"/><path d="M8.4 8.4l7.2 7.2M15.6 8.4l-7.2 7.2"/>'],
+  ['citron', 'tarte au citron',
+   '<circle cx="12" cy="12" r="8.2"/><path d="M12 3.8V12l6.6 4.8"/>'],
+  ['kouign', 'kouign-amann',
+   '<circle cx="12" cy="12" r="8.2"/><path d="M6.6 6.6l4.4 4.4M17.4 6.6L13 11M17.4 17.4L13 13M6.6 17.4L11 13"/>'],
+  ['raisin', 'pain aux raisins',
+   '<circle cx="12" cy="12" r="8.2"/><path d="M12 12a3.2 3.2 0 113.2-3.2c0 3-3.2 3.7-3.2 7"/>'],
+  ['sandwich', 'sandwich',
+   '<path d="M3.4 13.6h17.2a1.6 1.6 0 010 3.2H3.4a1.6 1.6 0 010-3.2z"/><path d="M4.6 13.6c0-3.4 3.3-6 7.4-6s7.4 2.6 7.4 6"/>']
+];
+const BREAD = {};
+BREADS.forEach(b => { BREAD[b[0]] = { fr: b[1], icon: b[2] }; });
+
+const breadIcon = (code, size, col) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24"
+  fill="none" stroke="${col}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
+  style="flex:0 0 auto">${BREAD[code] ? BREAD[code].icon : ''}</svg>`;
+const breadName = code => (T('bread')[code] || (BREAD[code] ? BREAD[code].fr : code));
+const itemsOf = id => state.items[id] || [];
+const eur = c => '€' + (c / 100).toFixed(2);
+
+function breadStats(code) {
+  const prices = [];
+  let shops = 0;
+  for (const [id, list] of Object.entries(state.items)) {
+    const mine = list.filter(i => i.b === code);
+    if (!mine.length) continue;
+    shops++;
+    mine.forEach(i => { if (i.p) prices.push(i.p); });
+  }
+  const avg = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+  return { shops, avg, n: prices.length };
+}
+
+/* --------------------------------------------------------------- her ranking */
+/* Bradley-Terry by MM iteration. Order-independent, stable on a dozen answers,
+   and transitive for free — she never has to compare every pair. */
+function btRank(ids) {
+  const n = ids.length;
+  if (!n) return [];
+  const idx = {};
+  ids.forEach((id, i) => { idx[id] = i; });
+  const wins = new Array(n).fill(0), met = new Array(n).fill(0);
+  const pair = {};
+  for (const [a, b] of state.duels) {
+    const i = idx[a], j = idx[b];
+    if (i === undefined || j === undefined) continue;
+    wins[i]++; met[i]++; met[j]++;
+    const k = i < j ? i + ':' + j : j + ':' + i;
+    pair[k] = (pair[k] || 0) + 1;
+  }
+  let p = new Array(n).fill(1);
+  for (let it = 0; it < 160; it++) {
+    const np = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+      let d = 2 / (p[i] + 1);                    // one phantom win, one phantom loss
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue;
+        const k = i < j ? i + ':' + j : j + ':' + i;
+        const c = pair[k];
+        if (c) d += c / (p[i] + p[j]);
+      }
+      np[i] = d > 0 ? (wins[i] + 1) / d : p[i];
+    }
+    const mean = np.reduce((a, b) => a + b, 0) / n || 1;
+    p = np.map(v => Math.max(v / mean, 1e-9));
+  }
+  return ids.map((id, i) => ({ id, score: p[i], met: met[i] }))
+            .sort((a, b) => b.score - a.score);
+}
+
+/* A league key is a shop id, or "shopId#bread" when the league is one item. */
+function rankable(kind) {
+  if (kind.slice(0, 2) === 'b:') {
+    const code = kind.slice(2), out = [];
+    for (const [id, list] of Object.entries(state.items)) {
+      if (state.byId[id] && list.some(i => i.b === code)) out.push(id + '#' + code);
+    }
+    return out;
+  }
+  return stampedIds().filter(id => {
+    const q = state.byId[id];
+    return q && (kind === 'all' || q.k === +kind);
+  });
+}
+const keyPlace = k => state.byId[k.split('#')[0]];
+const keyBread = k => (k.indexOf('#') > 0 ? k.split('#')[1] : null);
+function keyPrice(k) {
+  const [id, code] = k.split('#');
+  if (!code) return 0;
+  const mine = itemsOf(id).filter(i => i.b === code && i.p);
+  return mine.length ? mine.reduce((a, b) => a + b.p, 0) / mine.length : 0;
+}
+function breadLeagues() {
+  const n = {};
+  for (const [id, list] of Object.entries(state.items)) {
+    if (!state.byId[id]) continue;
+    new Set(list.map(i => i.b)).forEach(c => { n[c] = (n[c] || 0) + 1; });
+  }
+  return Object.keys(n).filter(c => n[c] >= 2).sort((a, b) => n[b] - n[a]);
+}
+
+/* Whoever has been compared least, against someone they have not met. */
+function nextPair(kind) {
+  const ids = rankable(kind);
+  if (ids.length < 2) return null;
+  const met = {}, seen = {};
+  ids.forEach(id => { met[id] = 0; });
+  for (const [a, b] of state.duels) {
+    if (met[a] !== undefined) met[a]++;
+    if (met[b] !== undefined) met[b]++;
+    seen[a + '|' + b] = seen[b + '|' + a] = 1;
+  }
+  const order = ids.slice().sort((x, y) => met[x] - met[y]);
+  for (const a of order) {
+    for (const b of order) {
+      if (a === b || seen[a + '|' + b]) continue;
+      return [a, b];
+    }
+  }
+  return null;                                   // everyone has met everyone
+}
+
 /* ------------------------------------------------------------- the log tab */
+const VCOL = ['#6F6250', '#8E7098', '#77794F'];   // once / fine / again
+const VKEY = ['v_once', 'v_ok', 'v_again'];
+
+function verdictDot(id, size) {
+  const v = state.verdict[id];
+  if (v === undefined) return '';
+  const r = size || 7;
+  return `<svg width="${r * 2}" height="${r * 2}" viewBox="0 0 ${r * 2} ${r * 2}" style="flex:0 0 auto">
+    <circle cx="${r}" cy="${r}" r="${r - 1}" fill="${v === 2 ? VCOL[2] : 'none'}"
+      stroke="${VCOL[v]}" stroke-width="1.6"/></svg>`;
+}
+
 function openLog() {
+  const V = [['time', T('d_time')], ['good', T('d_good')], ['rank', T('d_rank')]];
+  const head = `
+    <div class="grip"></div>
+    <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('d_title'))}</div>
+    <div class="seg" style="margin-top:12px">
+      ${V.map(([v, l]) => `<button data-dv="${v}" class="${state.diaryView === v ? 'on' : ''}">${esc(l)}</button>`).join('')}
+    </div>`;
+  const bind = () => {
+    $('#setSheet').querySelectorAll('[data-dv]').forEach(b => {
+      b.onclick = () => { state.diaryView = b.dataset.dv; openLog(); };
+    });
+    $('#setSheet').onclick = e => {
+      const row = e.target.closest('[data-id]'); if (!row) return;
+      const q = state.byId[row.dataset.id];
+      if (q) { state.cx = q.WX; state.cy = q.WY; state.k = Math.max(state.k, .9); clampView(); backToMap(); openPlace(q); }
+    };
+  };
+  if (state.diaryView === 'good') { diaryGood(head, bind); return; }
+  if (state.diaryView === 'rank') { diaryRank(head, bind); return; }
+  diaryTime(head, bind);
+}
+
+/* ---------- the ones she would go back to */
+function diaryGood(head, bind) {
+  const ids = stampedIds().filter(id => state.verdict[id] === 2);
+  const byKind = [0, 1, 2, 3].map(k => ids.filter(id => state.byId[id] && state.byId[id].k === k));
+  const body = ids.length ? byKind.map((list, k) => !list.length ? '' : `
+      <div class="fhead" style="margin-top:16px">${esc(T('kind')[k])} · ${list.length}</div>
+      ${list.map(id => {
+        const q = state.byId[id];
+        return `<div class="aw" data-id="${esc(id)}">
+          ${verdictDot(id)}
+          <div class="awn" class="ser" style="font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;font-weight:600">${esc(q.n)}</div>
+          ${q.aw ? `<svg width="16" height="14" viewBox="0 0 16 14" style="flex:0 0 auto"><g fill="none" stroke="${C.crustDeep}" stroke-width="1.3" stroke-linecap="round"><path d="M4.6 3.4 Q1.4 7 4.6 10.6"/><path d="M11.4 3.4 Q14.6 7 11.4 10.6"/></g></svg>` : ''}
+          <div class="mono" style="font-size:10px;color:var(--mute);flex:0 0 auto">${q.a}e</div>
+        </div>`;
+      }).join('')}`).join('') : `
+      <div style="text-align:center;padding:44px 0 24px">
+        <div style="font-size:13px;font-weight:600">${esc(T('d_good_empty'))}</div>
+        <div style="font-size:11.5px;color:var(--mute);margin-top:6px">${esc(T('d_good_empty_d'))}</div>
+      </div>`;
+  $('#setSheet').innerHTML = head + body;
+  bind();
+  show('setSheet');
+}
+
+/* ---------- her ranking, and the duel that builds it */
+function diaryRank(head, bind) {
+  const K = [['all', T('r_shop')], ['0', T('f_bakery')], ['1', T('f_pastry')], ['2', T('f_choc')]]
+    .concat(breadLeagues().map(c => ['b:' + c, breadName(c)]));
+  const ids = rankable(state.rankKind);
+  const ranked = btRank(ids);
+  const pair = nextPair(state.rankKind);
+  const duelsHere = state.duels.filter(([a, b]) =>
+    ids.indexOf(a) >= 0 && ids.indexOf(b) >= 0).length;
+
+  const chips = `<div style="display:flex;gap:6px;margin-top:12px;overflow-x:auto">
+    ${K.map(([v, l]) => `<button class="chip ${state.rankKind === v ? 'on' : ''}" data-rk="${v}">${esc(l)}</button>`).join('')}
+  </div>`;
+
+  let body;
+  if (ids.length < 2) {
+    body = `<div style="text-align:center;padding:44px 0 24px">
+      <div style="font-size:13px;font-weight:600">${esc(T('r_need'))}</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:6px">${esc(T('r_need_d'))}</div></div>`;
+  } else {
+    body = `
+      <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+        <div class="mono" style="font-size:10.5px;color:var(--mute)">${esc(T('r_duels', duelsHere))}</div>
+        <div style="flex:1 1 auto;height:1px;background:var(--line)"></div>
+        ${(() => {
+          if (state.rankKind.slice(0, 2) !== 'b:') return `<div class="mono" style="font-size:10.5px;color:var(--mute)">${ids.length}</div>`;
+          const st = breadStats(state.rankKind.slice(2));
+          return `<div class="mono" style="font-size:10.5px;color:var(--mute)">${st.avg ? esc(T('r_avg', eur(st.avg))) + ' · ' : ''}${ids.length}</div>`;
+        })()}
+      </div>
+      ${ranked.map((r, i) => {
+        const q = keyPlace(r.id);
+        if (!q) return '';
+        const sure = r.met >= 2;
+        const pr = keyPrice(r.id);
+        return `<div class="aw" data-id="${esc(r.id.split('#')[0])}">
+          <div class="mono" style="width:20px;text-align:center;flex:0 0 auto;font-size:14px;
+               color:${i === 0 ? C.crustDeep : C.mute};font-weight:${i === 0 ? 600 : 400}">${i + 1}</div>
+          <div class="awn" style="font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;font-weight:600">${esc(q.n)}</div>
+          ${verdictDot(r.id.split('#')[0], 6)}
+          ${pr ? `<div class="mono" style="font-size:10.5px;color:${C.crustDeep};flex:0 0 auto">${eur(pr)}</div>` : ''}
+          <div class="mono" style="font-size:10px;color:var(--mute);flex:0 0 auto">${q.a}e</div>
+          <div class="mono" style="font-size:9.5px;flex:0 0 auto;width:44px;text-align:right;
+               color:${sure ? C.olive : C.faint}">${sure ? esc(T('r_sure')) : esc(T('r_judging'))}</div>
+        </div>`;
+      }).join('')}
+      ${pair ? `<button class="cta" style="margin-top:16px" id="goDuel">${esc(T('r_duel'))}</button>`
+             : `<div class="small" style="text-align:center;margin-top:16px">${esc(T('r_done'))}</div>`}`;
+  }
+
+  $('#setSheet').innerHTML = head + chips + body;
+  bind();
+  $('#setSheet').querySelectorAll('[data-rk]').forEach(b => {
+    b.onclick = ev => { ev.stopPropagation(); state.rankKind = b.dataset.rk; openLog(); };
+  });
+  const g = $('#goDuel');
+  if (g) g.onclick = ev => { ev.stopPropagation(); openDuel(); };
+  show('setSheet');
+}
+
+function openDuel() {
+  const pair = nextPair(state.rankKind);
+  if (!pair) { openLog(); return; }
+  const P0 = keyPlace(pair[0]), P1 = keyPlace(pair[1]);
+  if (!P0 || !P1) { openLog(); return; }
+  const card = (k, side) => {
+    const q = keyPlace(k);
+    const code = keyBread(k);
+    q.key = k;
+    return `
+    <button data-win="${esc(k)}" style="display:block;width:100%;text-align:left;
+        border:1px solid var(--line);background:var(--card);padding:15px 16px">
+      <div class="mono" style="font-size:9px;letter-spacing:2px;color:${C.crustDeep}">${side}</div>
+      <div class="ser" style="font-size:21px;font-weight:600;line-height:1.15;margin-top:6px">${esc(q.n)}</div>
+      ${code ? `<div style="display:flex;align-items:center;gap:7px;margin-top:7px">
+        ${breadIcon(code, 18, C.crustDeep)}
+        <div class="ser" style="font-size:14px;font-weight:600;color:${C.crustDeep}">${esc(BREAD[code] ? BREAD[code].fr : code)}</div>
+        ${keyPrice(q.key) ? `<div class="mono" style="font-size:12px;color:var(--ink2)">${eur(keyPrice(q.key))}</div>` : ''}
+      </div>` : ''}
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <div class="mono" style="font-size:10.5px;color:var(--mute)">${q.a}e</div>
+        <div class="dot"></div>
+        <div style="font-size:11px;color:var(--ink2)">${esc(T('kind')[q.k])}</div>
+        ${state.verdict[q.id] !== undefined ? '<div class="dot"></div><div style="font-size:11px;color:var(--ink2)">' + esc(T(VKEY[state.verdict[q.id]])) + '</div>' : ''}
+      </div>
+      ${q.aw ? `<div class="mono" style="font-size:9.5px;color:${C.crustDeep};margin-top:7px">${esc(T('wins', q.aw.length))}</div>` : ''}
+      ${(() => {
+        const note = code ? (itemsOf(q.id).filter(i => i.b === code && i.n).slice(-1)[0] || {}).n : '';
+        return note ? `<div style="font-size:11.5px;color:var(--ink2);line-height:1.5;margin-top:8px;
+          padding-top:8px;border-top:1px solid var(--divider)">${esc(note)}</div>` : '';
+      })()}
+      <div class="mono" style="font-size:9.5px;color:var(--mute);margin-top:5px">${esc(T('stamped_n', (state.visits[q.id] || []).length))}</div>
+    </button>`;
+  };
+
+  $('#stampSheet').innerHTML = `
+    <div class="grip"></div>
+    <div style="text-align:center">
+      <div class="lbl">${esc(T('d_rank'))}</div>
+      <div class="ser" style="font-size:25px;font-weight:600;margin-top:10px">${esc(T('r_which'))}</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:5px">${esc(T('r_which_d'))}</div>
+    </div>
+    <div style="margin-top:18px">${card(pair[0], 'A')}</div>
+    <div style="display:flex;align-items:center;gap:12px;margin:12px 0">
+      <div style="flex:1 1 auto;height:1px;background:var(--line)"></div>
+      <div class="ser" style="font-size:19px;font-weight:700;letter-spacing:3px;color:var(--mute)">VS</div>
+      <div style="flex:1 1 auto;height:1px;background:var(--line)"></div>
+    </div>
+    <div>${card(pair[1], 'B')}</div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="cta ghost" style="flex:1 1 0" id="duelSkip">${esc(T('r_skip'))}</button>
+      <button class="cta ghost" style="flex:1 1 0" id="duelStop">${esc(T('done'))}</button>
+    </div>`;
+  $('#stampSheet').querySelectorAll('[data-win]').forEach(b => {
+    b.onclick = () => {
+      const win = b.dataset.win;
+      const lose = pair[0] === win ? pair[1] : pair[0];
+      state.duels.push([win, lose]);
+      saveRecords();
+      const more = nextPair(state.rankKind);
+      if (more) openDuel(); else { closeSheets(); state.diaryView = 'rank'; openLog(); }
+    };
+  });
+  $('#duelSkip').onclick = () => {
+    state.duels.push([pair[0], pair[1]]);        // a draw is one win each way
+    state.duels.push([pair[1], pair[0]]);
+    saveRecords();
+    const more = nextPair(state.rankKind);
+    if (more) openDuel(); else { closeSheets(); state.diaryView = 'rank'; openLog(); }
+  };
+  $('#duelStop').onclick = () => { closeSheets(); state.diaryView = 'rank'; openLog(); };
+  show('stampSheet');
+}
+
+/* ---------- every stamp, in the order it happened */
+function diaryTime(head, bind) {
   const rows = [];
   for (const id of stampedIds()) {
     const p = state.byId[id]; if (!p) continue;
@@ -1286,6 +1668,7 @@ function openLog() {
         `<div class="mono" style="font-size:10px;color:var(--mute);letter-spacing:1.4px;margin:16px 0 6px">${esc(d)}</div>`;
       last = d;
       return head + `<div class="aw" data-id="${esc(r.p.id)}">
+        ${verdictDot(r.p.id, 6)}
         <svg width="18" height="18" viewBox="0 0 20 20" style="flex:0 0 auto">
           <circle cx="10" cy="10" r="7.4" fill="${C.crust}" opacity="${Math.min(1, .45 + r.n * .18)}"/>
           <circle cx="10" cy="10" r="9" fill="none" stroke="${C.crustDeep}" stroke-width=".9" opacity=".45"/></svg>
@@ -1296,18 +1679,10 @@ function openLog() {
     }).join('');
   }
 
-  $('#setSheet').innerHTML = `
-    <div class="grip"></div>
-    <div style="display:flex;align-items:baseline;justify-content:space-between">
-      <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('log_title'))}</div>
-      <div class="mono" style="font-size:10.5px;color:var(--mute)">${esc(T('log_sum', shops, rows.length))}</div>
-    </div>
-    ${body}`;
-  $('#setSheet').onclick = e => {
-    const row = e.target.closest('[data-id]'); if (!row) return;
-    const p = state.byId[row.dataset.id];
-    if (p) { state.cx = p.WX; state.cy = p.WY; state.k = Math.max(state.k, .8); clampView(); backToMap(); openPlace(p); }
-  };
+  $('#setSheet').innerHTML = head +
+    `<div class="mono" style="font-size:10.5px;color:var(--mute);margin-top:12px">${esc(T('log_sum', shops, rows.length))}</div>` +
+    body;
+  bind();
   show('setSheet');
 }
 
@@ -1353,6 +1728,92 @@ function openTrail() {
     <div class="small" style="margin-top:4px">${esc(T('trail_book_soon'))}</div>`;
   $('#setSheet').onclick = null;
   show('setSheet');
+}
+
+/* ------------------------------------------------------- what she bought today */
+function openBasket(p) {
+  const day = new Date().setHours(0, 0, 0, 0);
+  const today = itemsOf(p.id).filter(i => i.t >= day);
+  const total = today.reduce((a, b) => a + (b.p || 0), 0);
+
+  const cell = ([code, fr]) => {
+    const on = today.some(i => i.b === code);
+    return `<button data-b="${code}" style="display:flex;flex-direction:column;align-items:center;
+        justify-content:center;gap:4px;height:64px;border:1px solid ${on ? C.crust : C.line};
+        background:${on ? 'rgba(196,131,46,.10)' : C.card};width:100%">
+      ${breadIcon(code, 25, on ? C.crustDeep : C.ink2)}
+      <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:10.5px;font-weight:600;
+           line-height:1;color:${on ? C.crustDeep : C.ink2};text-align:center">${esc(fr)}</div>
+    </button>`;
+  };
+
+  const row = it => `
+    <div style="border:1px solid var(--line);background:var(--card);padding:11px 12px">
+      <div style="display:flex;align-items:center;gap:9px">
+        ${breadIcon(it.b, 20, C.crustDeep)}
+        <div class="ser" style="flex:1 1 auto;font-size:15px;font-weight:600;min-width:0">${esc(BREAD[it.b] ? BREAD[it.b].fr : it.b)}</div>
+        <div style="display:flex;align-items:center;border:1px solid var(--line)">
+          <button data-p="-" data-t="${it.t}" style="width:32px;height:32px">−</button>
+          <div class="mono" style="min-width:52px;text-align:center;font-size:12.5px;color:${it.p ? C.crustDeep : C.mute}">${it.p ? eur(it.p) : '—'}</div>
+          <button data-p="+" data-t="${it.t}" style="width:32px;height:32px">+</button>
+        </div>
+        <button data-x="${it.t}" style="width:26px;height:32px;color:var(--mute)">×</button>
+      </div>
+      <input data-n="${it.t}" placeholder="${esc(T('i_note'))}" value="${esc(it.n || '')}"
+        style="width:100%;margin-top:8px;padding:7px 0 0;border:none;border-top:1px solid var(--divider);
+        background:none;font:inherit;font-size:11.5px;color:var(--ink2);outline:none">
+    </div>`;
+
+  $('#stampSheet').innerHTML = `
+    <div class="grip"></div>
+    <div class="lbl">${esc(T('i_ask'))}</div>
+    <div class="ser" style="font-size:20px;font-weight:600;line-height:1.15;margin-top:8px">${esc(p.n)}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:14px">
+      ${BREADS.map(cell).join('')}
+    </div>
+    ${today.length ? `
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:18px">
+        <div class="lbl">${esc(T('i_basket', today.length))}</div>
+        <div class="mono" style="font-size:12px;color:${C.crustDeep}">${eur(total)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-top:9px">${today.map(row).join('')}</div>`
+    : `<div class="small" style="text-align:center;margin-top:18px">${esc(T('i_none'))}</div>`}
+    <button class="cta" style="margin-top:16px" id="basketDone">${esc(T('done'))}</button>`;
+
+  const redraw = () => { saveRecords(); openBasket(p); };
+  $('#stampSheet').querySelectorAll('[data-b]').forEach(b => {
+    b.onclick = () => {
+      const code = b.dataset.b;
+      const list = state.items[p.id] || (state.items[p.id] = []);
+      const at = list.findIndex(i => i.b === code && i.t >= day);
+      if (at >= 0) list.splice(at, 1); else list.push({ b: code, p: 0, n: '', t: Date.now() });
+      redraw();
+    };
+  });
+  $('#stampSheet').querySelectorAll('[data-p]').forEach(b => {
+    b.onclick = () => {
+      const it = itemsOf(p.id).find(i => String(i.t) === b.dataset.t);
+      if (!it) return;
+      it.p = Math.max(0, (it.p || 0) + (b.dataset.p === '+' ? 10 : -10));
+      redraw();
+    };
+  });
+  $('#stampSheet').querySelectorAll('[data-x]').forEach(b => {
+    b.onclick = () => {
+      const list = state.items[p.id] || [];
+      const at = list.findIndex(i => String(i.t) === b.dataset.x);
+      if (at >= 0) list.splice(at, 1);
+      redraw();
+    };
+  });
+  $('#stampSheet').querySelectorAll('[data-n]').forEach(inp => {
+    inp.onchange = () => {
+      const it = itemsOf(p.id).find(i => String(i.t) === inp.dataset.n);
+      if (it) { it.n = inp.value.slice(0, 200); saveRecords(); }
+    };
+  });
+  $('#basketDone').onclick = closeSheets;
+  show('stampSheet');
 }
 
 /* --------------------------------------------------------- the ranking tab */
