@@ -29,7 +29,7 @@ const KIND = ['#C4832E', '#A65B72', '#6E4A34', '#8E7098'];
 const state = {
   lang: 'ko', paris: null, places: [], comps: {},
   visits: {}, wish: {}, meta: {}, verdict: {}, duels: [], items: {},
-  diaryView: 'time', rankKind: 'all',
+  diaryView: 'time', rankKind: 'all', tasteScope: 'all',
   kinds: [true, true, true, true],
   onlyAward: false, onlyOpen: false, onlyIndie: false,
   onlyWish: false, onlyUnvisited: false,
@@ -1359,6 +1359,78 @@ function breadStats(code) {
   return { shops, avg, n: prices.length };
 }
 
+/* ------------------------------------------------------------ her taste shape */
+/* Every bread belongs to exactly one leaning, so the six shares always sum. */
+const AXES = [
+  ['plain',   ['baguette', 'campagne']],
+  ['butter',  ['croissant', 'painchoc', 'kouign']],
+  ['cream',   ['flan', 'eclair']],
+  ['fruit',   ['citron', 'chausson']],
+  ['almond',  ['galette', 'raisin']],
+  ['savoury', ['sandwich']]
+];
+const AXIS_OF = {};
+AXES.forEach(([id, list], i) => list.forEach(c => { AXIS_OF[c] = i; }));
+
+/* count = how often, liking = the mean verdict of the visits it came from
+   (again 1.0, fine 0.5, once 0.0; unanswered counts as fine). */
+function tasteProfile(scope) {
+  const n = new Array(6).fill(0), like = new Array(6).fill(0), lw = new Array(6).fill(0);
+  for (const [id, list] of Object.entries(state.items)) {
+    if (scope !== 'all' && id !== scope) continue;
+    if (!state.byId[id]) continue;
+    const v = state.verdict[id];
+    const score = v === undefined ? 0.5 : v / 2;
+    for (const it of list) {
+      const a = AXIS_OF[it.b];
+      if (a === undefined) continue;
+      n[a]++; like[a] += score; lw[a]++;
+    }
+  }
+  const total = n.reduce((a, b) => a + b, 0);
+  const peak = Math.max(1, ...n);
+  return {
+    total,
+    count: n.map(v => v / peak),                 // shape, not proportion of the whole
+    share: n.map(v => (total ? v / total : 0)),
+    liking: like.map((v, i) => (lw[i] ? v / lw[i] : 0)),
+    raw: n
+  };
+}
+
+function hexagon(prof, size) {
+  const R = size / 2 - 54, cx = size / 2, cy = size / 2;
+  const pt = (i, r) => {
+    const a = -Math.PI / 2 + i * Math.PI / 3;
+    return [cx + Math.cos(a) * R * r, cy + Math.sin(a) * R * r];
+  };
+  const poly = vals => vals.map((v, i) => pt(i, Math.max(v, 0.04)).map(x => x.toFixed(1)).join(',')).join(' ');
+  const web = [0.25, 0.5, 0.75, 1].map(r =>
+    `<polygon points="${poly(new Array(6).fill(r))}" fill="none" stroke="${C.line}" stroke-width="${r === 1 ? 1.1 : 0.7}"/>`).join('');
+  const spokes = [0, 1, 2, 3, 4, 5].map(i => {
+    const [x, y] = pt(i, 1);
+    return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${C.line}" stroke-width="0.7"/>`;
+  }).join('');
+  const labels = AXES.map(([id], i) => {
+    const [x, y] = pt(i, 1.17);
+    const mid = i === 0 || i === 3;
+    const anchor = mid ? 'middle' : (x > cx ? 'start' : 'end');
+    const lx = mid ? x : (x > cx ? x + 4 : x - 4);
+    const ly = i === 0 ? y - 4 : i === 3 ? y + 12 : y + 1;
+    return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}"
+      font-family="'IBM Plex Sans KR',sans-serif" font-size="10.5" fill="${C.ink2}">${esc(T('t_axis')[id])}</text>
+      <text x="${lx.toFixed(1)}" y="${(ly + 12).toFixed(1)}" text-anchor="${anchor}"
+      font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="${C.mute}">${prof.raw[i]}</text>`;
+  }).join('');
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    ${web}${spokes}
+    <polygon points="${poly(prof.count)}" fill="${C.crust}" fill-opacity=".22" stroke="${C.crustDeep}" stroke-width="1.8" stroke-linejoin="round"/>
+    <polygon points="${poly(prof.liking)}" fill="none" stroke="${C.olive}" stroke-width="1.6"
+      stroke-dasharray="4 3" stroke-linejoin="round"/>
+    ${labels}
+  </svg>`;
+}
+
 /* --------------------------------------------------------------- her ranking */
 /* Bradley-Terry by MM iteration. Order-independent, stable on a dozen answers,
    and transitive for free — she never has to compare every pair. */
@@ -1462,7 +1534,8 @@ function verdictDot(id, size) {
 }
 
 function openLog() {
-  const V = [['time', T('d_time')], ['good', T('d_good')], ['rank', T('d_rank')]];
+  const V = [['time', T('d_time')], ['good', T('d_good')],
+             ['taste', T('t_title')], ['rank', T('d_rank')]];
   const head = `
     <div class="grip"></div>
     <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('d_title'))}</div>
@@ -1480,6 +1553,7 @@ function openLog() {
     };
   };
   if (state.diaryView === 'good') { diaryGood(head, bind); return; }
+  if (state.diaryView === 'taste') { diaryTaste(head, bind); return; }
   if (state.diaryView === 'rank') { diaryRank(head, bind); return; }
   diaryTime(head, bind);
 }
@@ -1505,6 +1579,58 @@ function diaryGood(head, bind) {
       </div>`;
   $('#setSheet').innerHTML = head + body;
   bind();
+  show('setSheet');
+}
+
+/* ---------- the shape of what she likes */
+function diaryTaste(head, bind) {
+  const shops = Object.keys(state.items)
+    .filter(id => state.byId[id] && state.items[id].length >= 2)
+    .sort((a, b) => state.items[b].length - state.items[a].length);
+  if (state.tasteScope !== 'all' && shops.indexOf(state.tasteScope) < 0) state.tasteScope = 'all';
+
+  const prof = tasteProfile(state.tasteScope);
+  const chips = `<div style="display:flex;gap:6px;margin-top:12px;overflow-x:auto">
+    <button class="chip ${state.tasteScope === 'all' ? 'on' : ''}" data-ts="all">${esc(T('t_me'))}</button>
+    ${shops.map(id => `<button class="chip ${state.tasteScope === id ? 'on' : ''}" data-ts="${esc(id)}">${esc(state.byId[id].n)}</button>`).join('')}
+  </div>`;
+
+  let body;
+  if (!prof.total) {
+    body = `<div style="text-align:center;padding:40px 0 26px">
+      <div style="font-size:13px;font-weight:600">${esc(T('t_thin'))}</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:6px">${esc(T('t_thin_d'))}</div></div>`;
+  } else {
+    let most = 0, fav = 0;
+    prof.raw.forEach((v, i) => { if (v > prof.raw[most]) most = i; });
+    prof.liking.forEach((v, i) => { if (prof.raw[i] && v > prof.liking[fav]) fav = i; });
+    const same = most === fav;
+    body = `
+      <div style="display:flex;justify-content:center;margin-top:8px">${hexagon(prof, 334)}</div>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:2px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="16" height="10"><rect width="16" height="10" fill="${C.crust}" fill-opacity=".22" stroke="${C.crustDeep}" stroke-width="1.4"/></svg>
+          <div style="font-size:10.5px;color:var(--ink2)">${esc(T('t_amount'))}</div></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="16" height="10"><line x1="0" y1="5" x2="16" y2="5" stroke="${C.olive}" stroke-width="1.6" stroke-dasharray="4 3"/></svg>
+          <div style="font-size:10.5px;color:var(--ink2)">${esc(T('t_liking'))}</div></div>
+      </div>
+      <div style="border-left:3px solid ${C.crust};padding:3px 0 3px 12px;margin-top:18px">
+        <div style="font-size:12.5px;line-height:1.6">
+          ${esc(T('t_most'))} <strong style="font-weight:600">${esc(T('t_axis')[AXES[most][0]])}</strong>
+          · ${esc(T('t_fav'))} <strong style="font-weight:600;color:${C.olive}">${esc(T('t_axis')[AXES[fav][0]])}</strong>
+        </div>
+        <div style="font-size:11px;color:var(--mute);margin-top:5px;line-height:1.55">
+          ${esc(same ? T('t_same') : T('t_differ'))}</div>
+      </div>
+      <div class="mono" style="font-size:10px;color:var(--mute);text-align:center;margin-top:14px">
+        ${esc(T('t_from', prof.total))}</div>`;
+  }
+  $('#setSheet').innerHTML = head + chips + body;
+  bind();
+  $('#setSheet').querySelectorAll('[data-ts]').forEach(b => {
+    b.onclick = ev => { ev.stopPropagation(); state.tasteScope = b.dataset.ts; openLog(); };
+  });
   show('setSheet');
 }
 
