@@ -597,6 +597,7 @@ function overlapSVG() {
 
 /* --------------------------------------------------------------- settings */
 function openSettings() {
+  $('#setSheet').onclick = null;
   const ids = stampedIds();
   const nb = ids.reduce((s, id) => s + state.visits[id].length, 0);
   $('#setSheet').innerHTML = `
@@ -746,9 +747,17 @@ function paintTabs() {
 }
 $('#tabs').addEventListener('click', e => {
   const b = e.target.closest('.tab'); if (!b) return;
-  if (b.dataset.tab === 'map') { closeSheets(); return; }
-  toast(T('soon') + ' — ' + T('soon_sub'));
+  const t = b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
+  if (t === 'map') closeSheets();
+  else if (t === 'log') openLog();
+  else if (t === 'trail') openTrail();
+  else openRanking();
 });
+function backToMap() {
+  closeSheets();
+  document.querySelectorAll('.tab').forEach((x, i) => x.classList.toggle('on', i === 0));
+}
 
 function setLang(l) {
   state.lang = l;
@@ -776,16 +785,168 @@ $('#locate').onclick = () => {
   }, () => toast(T('load_fail')), { enableHighAccuracy: true, timeout: 8000 });
 };
 
+
+/* ------------------------------------------------------------- the log tab */
+function openLog() {
+  const rows = [];
+  for (const id of stampedIds()) {
+    const p = state.byId[id]; if (!p) continue;
+    state.visits[id].forEach((t, i) => rows.push({ p, t, n: i + 1 }));
+  }
+  rows.sort((a, b) => b.t - a.t);
+  const shops = stampedIds().length;
+
+  let body;
+  if (!rows.length) {
+    body = `<div style="text-align:center;padding:46px 0 30px">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="${C.faint}" stroke-width="1.2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="5"/></svg>
+      <div style="font-size:13.5px;font-weight:600;margin-top:14px">${esc(T('log_empty'))}</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:6px">${esc(T('log_empty_sub'))}</div>
+    </div>`;
+  } else {
+    let last = '';
+    body = rows.map(r => {
+      const d = fmtDate(r.t);
+      const head = d === last ? '' :
+        `<div class="mono" style="font-size:10px;color:var(--mute);letter-spacing:1.4px;margin:16px 0 6px">${esc(d)}</div>`;
+      last = d;
+      return head + `<div class="aw" data-id="${esc(r.p.id)}">
+        <svg width="18" height="18" viewBox="0 0 20 20" style="flex:0 0 auto">
+          <circle cx="10" cy="10" r="7.4" fill="${C.crust}" opacity="${Math.min(1, .45 + r.n * .18)}"/>
+          <circle cx="10" cy="10" r="9" fill="none" stroke="${C.crustDeep}" stroke-width=".9" opacity=".45"/></svg>
+        <div class="awn" style="font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;font-weight:600">${esc(r.p.n)}</div>
+        <div class="mono" style="font-size:10px;color:var(--mute);flex:0 0 auto">${r.p.a}e</div>
+        ${r.n > 1 ? '<div class="mono" style="font-size:10px;color:' + C.crustDeep + ';flex:0 0 auto">' + esc(T('nth', r.n)) + '</div>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  $('#setSheet').innerHTML = `
+    <div class="grip"></div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between">
+      <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('log_title'))}</div>
+      <div class="mono" style="font-size:10.5px;color:var(--mute)">${esc(T('log_sum', shops, rows.length))}</div>
+    </div>
+    ${body}`;
+  $('#setSheet').onclick = e => {
+    const row = e.target.closest('[data-id]'); if (!row) return;
+    const p = state.byId[row.dataset.id];
+    if (p) { state.cx = p.WX; state.cy = p.WY; state.k = Math.max(state.k, .8); clampView(); backToMap(); openPlace(p); }
+  };
+  show('setSheet');
+}
+
+/* ----------------------------------------------------------- the trail tab */
+function openTrail() {
+  const done = arrDone();
+  const cells = state.paris.arr.map(a => {
+    const on = done.has(a.n);
+    return `<div style="border:1px solid ${on ? C.crust : C.line};background:${on ? 'rgba(196,131,46,.12)' : C.card};padding:7px 6px 8px;min-height:46px;display:flex;flex-direction:column;gap:2px">
+      <div class="mono" style="font-size:13px;font-weight:500;color:${on ? C.crustDeep : C.mute}">${a.n}</div>
+      <div style="font-size:8.5px;color:${on ? C.ink2 : C.mute};line-height:1.15;overflow:hidden">${esc(a.name || '')}</div>
+    </div>`;
+  }).join('');
+
+  const gp = (state.awards && state.awards.length) ? state.awards.slice().reverse().slice(0, 8) : [];
+  const gpRows = gp.map(w => `
+    <div class="aw">
+      <div class="mono" style="font-size:10.5px;color:var(--mute);width:30px;flex:0 0 auto">${w.y}</div>
+      <div class="awn" style="font-size:12.5px">${esc(w.shop || w.who)}
+        ${w.shop ? '<div class="mono" style="font-size:9px;color:var(--mute);margin-top:1px">' + esc(w.who) + '</div>' : ''}</div>
+      <div class="mono" style="font-size:10px;color:var(--mute);flex:0 0 auto">${w.arr ? w.arr + 'e' : '—'}</div>
+    </div>`).join('');
+
+  $('#setSheet').innerHTML = `
+    <div class="grip"></div>
+    <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('trail_title'))}</div>
+    <div style="font-size:11.5px;color:var(--mute);margin-top:3px">${esc(T('trail_sub'))}</div>
+
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:20px">
+      <div style="font-size:12.5px;font-weight:600">${esc(T('trail_arr'))}</div>
+      <div class="mono" style="font-size:11px;color:${C.crustDeep}">${done.size} / 20</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-top:9px">${cells}</div>
+
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:22px">
+      <div style="font-size:12.5px;font-weight:600">${esc(T('trail_gp'))}</div>
+      <div class="mono" style="font-size:11px;color:var(--mute)">${state.awards ? state.awards.length : 33}</div>
+    </div>
+    <div class="small" style="margin-top:4px">${esc(T('trail_gp_sub'))}</div>
+    <div style="margin-top:6px">${gpRows}</div>
+
+    <div style="font-size:12.5px;font-weight:600;margin-top:22px">${esc(T('trail_book'))}</div>
+    <div class="small" style="margin-top:4px">${esc(T('trail_book_soon'))}</div>`;
+  $('#setSheet').onclick = null;
+  show('setSheet');
+}
+
+/* --------------------------------------------------------- the ranking tab */
+function openRanking() {
+  $('#setSheet').innerHTML = `
+    <div class="grip"></div>
+    <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('rank_title'))}</div>
+    <div style="display:flex;justify-content:center;margin:26px 0 18px">
+      <svg width="230" height="96" viewBox="0 0 230 96">
+        <rect x="4" y="8" width="96" height="80" fill="${C.card}" stroke="${C.line}"/>
+        <rect x="130" y="8" width="96" height="80" fill="${C.card}" stroke="${C.line}"/>
+        <g stroke="${C.crust}" stroke-width="1.3" fill="none" stroke-linecap="round">
+          <g transform="translate(52 40) rotate(-38)"><ellipse rx="3.2" ry="8.6"/><path d="M-2 -4.6l4.2-1.3M-2.2 -.4l4.4-1.3M-2 3.8l4.2-1.3"/></g>
+          <g transform="translate(178 40) rotate(-38)"><ellipse rx="3.2" ry="8.6"/><path d="M-2 -4.6l4.2-1.3M-2.2 -.4l4.4-1.3M-2 3.8l4.2-1.3"/></g>
+        </g>
+        <line x1="24" y1="66" x2="80" y2="66" stroke="${C.line}"/>
+        <line x1="150" y1="66" x2="206" y2="66" stroke="${C.line}"/>
+        <line x1="30" y1="76" x2="66" y2="76" stroke="${C.line}"/>
+        <line x1="156" y1="76" x2="192" y2="76" stroke="${C.line}"/>
+        <text x="115" y="52" text-anchor="middle" font-family="Cormorant Garamond,Georgia,serif" font-size="19" font-weight="700" letter-spacing="2" fill="${C.mute}">VS</text>
+      </svg>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:14px;font-weight:600">${esc(T('rank_soon'))}</div>
+    </div>
+    <div class="body" style="white-space:pre-line;margin-top:12px;text-align:center">${esc(T('rank_soon_body'))}</div>
+    <button class="cta" style="margin-top:22px" id="rankBack">${esc(T('tab_map'))}</button>`;
+  $('#setSheet').onclick = null;
+  $('#rankBack').onclick = backToMap;
+  show('setSheet');
+}
+
+/* -------------------------------------------------------------- first open */
+function openWelcome() {
+  const bullet = t => `<div style="display:flex;align-items:center;gap:9px;margin-top:8px">
+    <svg width="13" height="13" viewBox="0 0 14 14"><circle cx="7" cy="7" r="3.2" fill="${C.crust}"/></svg>
+    <div style="font-size:12px;color:var(--ink2)">${esc(t)}</div></div>`;
+  $('#stampSheet').innerHTML = `
+    <div class="grip"></div>
+    <div style="text-align:center;padding-top:6px">
+      <svg width="54" height="20" viewBox="0 0 54 20">
+        <g stroke="${C.crust}" stroke-width="3.4" stroke-linecap="round">
+          <path d="M9 15L18 5"/><path d="M22.5 16.4L31.5 6.4"/><path d="M36 15L45 5"/></g></svg>
+      <div class="ser" style="font-size:32px;font-weight:600;letter-spacing:9px;margin-top:14px">MIETTE</div>
+      <div class="ser" style="font-style:italic;font-size:14px;color:var(--mute);margin-top:4px">${esc(T('tagline'))}</div>
+    </div>
+    <div class="rule" style="margin:20px 0 16px"></div>
+    <div style="font-size:13.5px;line-height:1.65">${esc(T('welcome_hi'))}</div>
+    <div style="font-size:13.5px;line-height:1.65;margin-top:6px;color:var(--ink2)">${esc(T('welcome_1'))}</div>
+    <div class="ser" style="font-style:italic;font-size:14.5px;color:var(--ink2);white-space:pre-line;margin-top:16px;line-height:1.5">${esc(T('welcome_2'))}</div>
+    <div style="margin-top:18px">${bullet(T('welcome_b1'))}${bullet(T('welcome_b2'))}${bullet(T('welcome_b3'))}</div>
+    <button class="cta" style="margin-top:22px" id="welcomeGo">${esc(T('welcome_go'))}</button>
+    <div class="ser" style="font-style:italic;font-size:12.5px;color:var(--mute);text-align:center;margin-top:20px;line-height:1.5">${esc(T('dedication'))}</div>`;
+  $('#welcomeGo').onclick = () => { state.meta.seen = Date.now(); saveRecords(); closeSheets(); };
+  show('stampSheet');
+}
+
 /* -------------------------------------------------------------------- boot */
 async function boot() {
   try { state.lang = localStorage.getItem('miette.lang') || navLang(); } catch (e) { state.lang = navLang(); }
   document.documentElement.lang = state.lang;
   $('#bootMsg').textContent = T('loading');
 
-  const [paris, places, comps] = await Promise.all([
+  const [paris, places, comps, awards] = await Promise.all([
     fetch('data/paris.json').then(r => r.json()),
     fetch('data/places.json').then(r => r.json()),
-    fetch('data/competitions.json').then(r => r.json()).catch(() => ({ competitions: [] }))
+    fetch('data/competitions.json').then(r => r.json()).catch(() => ({ competitions: [] })),
+    fetch('data/awards.json').then(r => r.json()).catch(() => null)
   ]);
   await loadRecords();
 
@@ -818,6 +979,8 @@ async function boot() {
   }
   state.bounds = { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
   (comps.competitions || []).forEach(c => { state.comps[c.id] = c; });
+  state.awards = awards && awards.competitions && awards.competitions[0]
+    ? awards.competitions[0].winners : [];
 
   resize();
   fitAll();
@@ -828,6 +991,7 @@ async function boot() {
   $('#tagline').textContent = T('tagline');
   clampView(); render();
   $('#boot').classList.add('gone');
+  if (!state.meta.seen) setTimeout(openWelcome, 380);
 
   try {
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
