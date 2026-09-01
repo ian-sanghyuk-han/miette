@@ -1597,53 +1597,99 @@ function dist(m) {
 function paintOpenBtn() { /* the open-now switch lives on the chip row now */ }
 
 function openLegend() {
-  const swatch = (i) => `<span style="display:inline-flex;width:14px;height:14px;border-radius:8px;background:${KIND[i]};flex:0 0 auto"></span>`;
-  const row = (mark, label) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--divider)">
-      <div style="width:34px;display:flex;justify-content:center;flex:0 0 auto">${mark}</div>
-      <div style="font-size:12px;color:var(--ink2)">${esc(label)}</div></div>`;
-  const dot = (fill, hollow) => `<svg width="26" height="26" viewBox="0 0 26 26">
-      <circle cx="13" cy="13" r="6" ${hollow ? `fill="none" stroke="${fill}" stroke-width="2"` : `fill="${fill}"`}/></svg>`;
+  const P = C.paper;
+  /* Each row draws exactly what the map draws, at the size it draws it, so the
+     legend cannot drift away from the thing it explains. */
+  const box = inner => `<svg width="42" height="30" viewBox="0 0 42 30" style="flex:0 0 auto">${inner}</svg>`;
+  const row = (mark, label, note) => `
+    <div style="display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid var(--divider)">
+      <div style="flex:0 0 auto;padding-top:1px">${mark}</div>
+      <div style="min-width:0">
+        <div style="font-size:12.5px;color:var(--ink)">${esc(label)}</div>
+        ${note ? `<div style="font-size:10.5px;color:var(--mute);line-height:1.5;margin-top:3px">${esc(note)}</div>` : ''}
+      </div>
+    </div>`;
+  const head = (t, sub) => `<div class="fhead">${esc(t)}</div>
+    ${sub ? `<div style="font-size:11px;color:var(--mute);margin-top:4px">${esc(sub)}</div>` : ''}`;
+
+  const dot = (k, kind) => `<circle cx="21" cy="15" r="6.5" fill="${KIND[k]}" fill-opacity="${kind}"/>`;
+  const sq = (k) => `<rect x="14.5" y="8.5" width="13" height="13" fill="${KIND[k]}"/>`;
+
   $('#setSheet').onclick = null;
   $('#setSheet').innerHTML = `
     <div class="grip"></div>
     <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('legend'))}</div>
+    <div style="font-size:11.5px;color:var(--mute);margin-top:4px;line-height:1.55">${esc(T('legend_intro'))}</div>
 
-    <div class="lbl" style="margin-top:18px">${esc(T('legend_kind'))}</div>
-    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin-top:10px">
-      ${[0, 1, 2, 3].map(i => `<div style="display:flex;align-items:center;gap:8px">
-        ${swatch(i)}<div style="font-size:12px">${esc(T('kind')[i])}</div></div>`).join('')}
+    ${head(T('ax_sell'))}
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;margin-top:10px">
+      ${[0, 1, 2, 3].map(k => `<div style="display:flex;align-items:center;gap:8px">
+        <span style="width:14px;height:14px;border-radius:8px;background:${KIND[k]};flex:0 0 auto"></span>
+        <span style="font-size:12px;color:${KIND_INK[k]}">${esc(T('kind')[k])}</span></div>`).join('')}
+    </div>
+    <div style="font-size:10.5px;color:var(--mute);margin-top:8px;line-height:1.5">${esc(T('legend_kind_d'))}</div>
+
+    ${head(T('ax_form'))}
+    <div style="margin-top:4px">
+      ${row(box(dot(0, 1)), T('legend_indie'))}
+      ${row(box(sq(0)), T('legend_chain'), T('f_chain_d'))}
     </div>
 
-    <div class="lbl" style="margin-top:20px">${esc(T('legend_hours'))}</div>
-    <div style="margin-top:6px">
-      ${row(dot(C.crust, false), T('legend_open'))}
-      ${row(dot(C.crust, true), T('legend_shut'))}
-      ${row(`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="6" fill="${C.crust}" opacity=".42"/></svg>`, T('legend_unknown'))}
+    ${head(T('ax_open'))}
+    <div style="margin-top:4px">
+      ${row(box(`<circle cx="21" cy="15" r="13" fill="${C.glow}" opacity=".17"/>
+        <circle cx="21" cy="15" r="9" fill="${C.glow}" opacity=".26"/>${dot(0, 1)}`), T('legend_open'))}
+      ${row(box(`<circle cx="21" cy="15" r="6" fill="none" stroke="${KIND[0]}" stroke-width="2"/>`),
+        T('legend_shut'))}
+      ${row(box(dot(0, .42)), T('legend_unknown'))}
     </div>
 
-    <div class="lbl" style="margin-top:20px">${esc(T('legend_marks'))}</div>
-    <div style="margin-top:6px">
-      ${row(`<svg width="30" height="26" viewBox="0 0 30 26"><circle cx="15" cy="13" r="5" fill="${C.crust}"/>
-        <g fill="none" stroke="${C.crustDeep}" stroke-width="1.5" stroke-linecap="round">
-        <path d="M7.4 8.6 Q3.6 13 7.4 17.4"/><path d="M22.6 8.6 Q26.4 13 22.6 17.4"/></g>
-        <circle cx="15" cy="3.6" r="1.7" fill="${C.crustDeep}"/></svg>`, T('legend_award'))}
-      ${row(`<svg width="34" height="26" viewBox="0 0 34 26"><circle cx="17" cy="13" r="5" fill="${C.crust}"/>
-        <g fill="none" stroke="${C.crustDeep}" stroke-width="1.4" stroke-linecap="round">
-        <path d="M9.4 8.6 Q5.6 13 9.4 17.4"/><path d="M24.6 8.6 Q28.4 13 24.6 17.4"/>
-        <path d="M6.6 7.4 Q1.8 13 6.6 18.6"/><path d="M27.4 7.4 Q32.2 13 27.4 18.6"/></g>
-        <circle cx="17" cy="3.4" r="1.7" fill="${C.crustDeep}"/></svg>`, T('legend_multi'))}
-      ${row(`<svg width="30" height="26" viewBox="0 0 30 26"><circle cx="15" cy="15" r="4.4" fill="${C.crust}" opacity=".45"/>
-        <circle cx="15" cy="15" r="8.4" fill="none" stroke="${C.mine}" stroke-width="1.7" stroke-dasharray="3.4 2.8"/>
-        <g stroke="${C.mine}" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".8">
-        <path d="M9.5 3.6 q3 -2.4 0 -5"/><path d="M15 2.6 q3 -2.4 0 -5"/><path d="M20.5 3.6 q3 -2.4 0 -5"/></g></svg>`, T('legend_wish'))}
-      ${row(`<svg width="30" height="26" viewBox="0 0 30 26">
-        <circle cx="12" cy="13" r="6.4" fill="${C.mine}" opacity=".5"/>
-        <circle cx="16" cy="13" r="6.4" fill="${C.mine}" opacity=".85"/>
-        <circle cx="14" cy="13" r="9.6" fill="none" stroke="${C.mine}" stroke-width="1" opacity=".45"/></svg>`, T('legend_stamp'))}
-      ${row(`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="${C.seine}" opacity=".16"/>
-        <circle cx="13" cy="13" r="5" fill="${C.seine}" stroke="${C.card}" stroke-width="2"/></svg>`, T('legend_here'))}
+    ${head(T('ax_prize'), T('legend_prize_d'))}
+    <div style="margin-top:4px">
+      ${row(box(`${dot(0, 1)}
+        <g fill="none" stroke="${NAT_COL.item}" stroke-width="1.7" stroke-linecap="round">
+          <path d="M11.5 9 Q7 15 11.5 21"/><path d="M30.5 9 Q35 15 30.5 21"/></g>`),
+        T('nat_item'), T('nat_item_d'))}
+      ${row(box(`${dot(0, 1)}
+        <circle cx="21" cy="15" r="10.5" fill="none" stroke="${NAT_COL.shop}" stroke-width="1.7"/>`),
+        T('nat_shop'), T('nat_shop_d'))}
+      ${row(box(`${dot(0, 1)}
+        <g fill="none" stroke="${NAT_COL.baguette}" stroke-width="1.7" stroke-linecap="round">
+          <path d="M11.5 9 Q7 15 11.5 21"/><path d="M30.5 9 Q35 15 30.5 21"/>
+          <path d="M13 3.6 H29"/></g>`),
+        T('nat_baguette'), T('nat_baguette_d'))}
+      ${row(box(`${dot(0, 1)}
+        <g fill="none" stroke="${NAT_COL.item}" stroke-width="1.5" stroke-linecap="round">
+          <path d="M11.5 9 Q7 15 11.5 21"/><path d="M30.5 9 Q35 15 30.5 21"/>
+          <path d="M8.5 7 Q3 15 8.5 23"/><path d="M33.5 7 Q39 15 33.5 23"/></g>`),
+        T('legend_multi'))}
+      ${row(box(`${dot(0, 1)}
+        <g fill="none" stroke="${NAT_COL.item}" stroke-width="1.7" stroke-linecap="round">
+          <path d="M11.5 9 Q7 15 11.5 21"/><path d="M30.5 9 Q35 15 30.5 21"/></g>
+        <circle cx="21" cy="3.4" r="2" fill="${NAT_COL.baguette}"/>`), T('legend_winner'))}
     </div>
-    <div class="small">${esc(T('legend_note'))}</div>`;
+
+    ${head(T('ax_mine'), T('legend_mine_d'))}
+    <div style="margin-top:4px">
+      ${row(box(`<circle cx="21" cy="15" r="7.5" fill="${C.mine}"/>
+        <circle cx="21" cy="15" r="10.5" fill="none" stroke="${C.mine}" stroke-width="1" opacity=".45"/>`),
+        T('legend_stamp'))}
+      ${row(box(`<circle cx="14" cy="15" r="7" fill="${C.mine}" opacity=".4"/>
+        <circle cx="21" cy="15" r="7" fill="${C.mine}" opacity=".65"/>
+        <circle cx="28" cy="15" r="7" fill="${C.mine}" opacity=".92"/>`), T('legend_regular'))}
+      ${row(box(`<circle cx="21" cy="17" r="5" fill="${KIND[0]}" opacity=".45"/>
+        <circle cx="21" cy="17" r="9" fill="none" stroke="${C.mine}" stroke-width="1.7" stroke-dasharray="3.6 3"/>
+        <g fill="none" stroke="${C.mine}" stroke-width="1.3" stroke-linecap="round" opacity=".85">
+          <path d="M15 5 q3 -2.4 0 -5"/><path d="M21 3.8 q3 -2.4 0 -5"/><path d="M27 5 q3 -2.4 0 -5"/></g>`),
+        T('legend_wish'))}
+      ${row(box(`<circle cx="21" cy="15" r="12" fill="${C.seine}" opacity=".16"/>
+        <circle cx="21" cy="15" r="6" fill="${C.seine}" stroke="${C.card}" stroke-width="2"/>`),
+        T('legend_here'))}
+    </div>
+
+    <div style="border:1px solid var(--line);background:var(--paper);padding:11px 12px;margin-top:18px">
+      <div style="font-size:11px;color:var(--ink2);line-height:1.6">${esc(T('legend_note'))}</div>
+    </div>`;
   show('setSheet');
 }
 let watchId = null;
@@ -2633,7 +2679,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v43';
+const BUILD = 'v44';
 const BOOT_AT = Date.now();
 
 async function boot() {
