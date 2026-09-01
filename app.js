@@ -162,9 +162,18 @@ const ERRAND = [
   { id: 'bread', kinds: [0, 1] },
   { id: 'sweet', kinds: [2, 3] }
 ];
+/* Emphasis, not narrowing: these two light a subset and dim the rest. */
+const EMPH = [
+  { id: 'onlyOpen',  test: p => p.O === true },
+  { id: 'onlyAward', test: p => awardOk(p) }
+];
+function emphasis() {
+  const on = EMPH.filter(e => state[e.id]);
+  if (!on.length) return null;
+  return p => on.every(e => e.test(p));          // both on means both must hold
+}
+
 const COND = [
-  { id: 'onlyOpen',      test: p => p.O === true },
-  { id: 'onlyAward',     test: p => awardOk(p) },
   { id: 'onlyIndie',     test: p => !p.b },
   { id: 'onlyChain',     test: p => !!p.b },
   { id: 'onlyWish',      test: p => !!state.wish[p.id] },
@@ -191,7 +200,13 @@ function topNature(p) {
   }
   return best;
 }
-const NAT_COL = { baguette: '#7A4310', shop: '#9A6B3A', item: '#C4832E' };
+/* The prize marks had been borrowing the trade palette — item was literally
+   boulangerie's gold — so the laurel said nothing the dot underneath had not
+   already said. An honour belongs to its own register: laurel green, which is
+   what a laurel is, and which no trade, the water or the stamp is using. Depth
+   separates the three claims. */
+const AWARD = '#35573F';
+const NAT_COL = { baguette: '#24402C', shop: '#35573F', item: '#4A6B4E' };
 
 /* The competitions are per-item, so "awarded" can be too. With nothing chosen it
    means any placing; choose a contest and it means that contest. */
@@ -216,7 +231,9 @@ function visible(p) {
   return true;
 }
 
-const condCount = () => COND.reduce((n, c) => n + (state[c.id] ? 1 : 0), 0);
+const condCount = () =>
+  COND.reduce((n, c) => n + (state[c.id] ? 1 : 0), 0) +
+  EMPH.reduce((n, e) => n + (state[e.id] ? 1 : 0), 0);
 
 function errandNow() {
   for (const e of ERRAND) {
@@ -312,6 +329,11 @@ function render() {
     p.sx = x; p.sy = y; seen.push(p);
     if (visible(p) && !state.visits[p.id]) live.push(p);
   }
+  // whatever is being pointed at keeps its colour; the city behind it steps back
+  const hot = emphasis();
+  const lit = hot ? live.filter(hot) : live;
+  const dim = hot ? live.filter(q => !hot(q)) : [];
+  const DIM = 0.26;
 
   // an open door throws light — but only while she has asked to see it
   if (state.onlyOpen) {
@@ -320,7 +342,7 @@ function render() {
     for (let pass = 0; pass < 3; pass++) {
       ctx.beginPath();
       let any = false;
-      for (const q of live) {
+      for (const q of lit) {
         if (q.O !== true) continue;
         any = true;
         const R = Math.min(Math.max(r * RAD[pass], 4.6 - pass), CAP[pass]);
@@ -332,50 +354,51 @@ function render() {
     ctx.globalAlpha = 1;
   }
 
-  for (let kind = 0; kind < 4; kind++) {
-    // open — a solid dot
-    ctx.beginPath();
-    for (const p of live) {
-      if (p.k !== kind || p.O !== true) continue;
-      markPath(p, r);
-    }
-    ctx.fillStyle = KIND[kind]; ctx.globalAlpha = .92; ctx.fill();
-
-    // hours unknown — the same dot, quieter
-    ctx.beginPath();
-    for (const p of live) {
-      if (p.k !== kind || p.O !== null) continue;
-      markPath(p, r);
-    }
-    ctx.globalAlpha = .42; ctx.fill(); ctx.globalAlpha = 1;
-
-    // shut — an empty shutter
-    if (r > 2) {
+  const drawKinds = (list, mul) => {
+    for (let kind = 0; kind < 4; kind++) {
+      // open — a solid dot
       ctx.beginPath();
-      for (const p of live) {
+      for (const p of list) {
+        if (p.k !== kind || p.O !== true) continue;
+        markPath(p, r);
+      }
+      ctx.fillStyle = KIND[kind]; ctx.globalAlpha = .92 * mul; ctx.fill();
+
+      // hours unknown — the same dot, quieter
+      ctx.beginPath();
+      for (const p of list) {
+        if (p.k !== kind || p.O !== null) continue;
+        markPath(p, r);
+      }
+      ctx.globalAlpha = .42 * mul; ctx.fill(); ctx.globalAlpha = 1;
+
+      // shut — an empty shutter
+      ctx.beginPath();
+      for (const p of list) {
         if (p.k !== kind || p.O !== false) continue;
         markPath(p, r);
       }
-      ctx.strokeStyle = KIND[kind]; ctx.lineWidth = Math.min(1.6, r * .5);
-      ctx.globalAlpha = .78; ctx.stroke(); ctx.globalAlpha = 1;
-    } else {
-      ctx.beginPath();
-      for (const p of live) {
-        if (p.k !== kind || p.O !== false) continue;
-        markPath(p, r);
+      if (r > 2) {
+        ctx.strokeStyle = KIND[kind]; ctx.lineWidth = Math.min(1.6, r * .5);
+        ctx.globalAlpha = .78 * mul; ctx.stroke();
+      } else {
+        ctx.globalAlpha = .34 * mul; ctx.fill();
       }
-      ctx.globalAlpha = .34; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.globalAlpha = 1;
     }
-  }
+  };
+  drawKinds(dim, DIM);
+  drawKinds(lit, 1);
 
-  // the prizes — one mark per kind of claim, stacked once per placing
-  if (r >= 2.4) {
+  // the prizes — one mark per kind of claim, stacked once per placing.
+  // Drawn when she has asked for them, so the default map stays calm.
+  if (r >= 2.4 && state.onlyAward) {
     const lr = r + 3.2, step = Math.max(1.7, r * .48);
     ctx.lineCap = 'round';
     for (const nat of ['item', 'shop', 'baguette']) {
       ctx.beginPath();
       let any = false;
-      for (const p of live) {
+      for (const p of lit) {
         if (!p.aw || topNature(p) !== nat) continue;
         any = true;
         const layers = Math.min(p.aw.length, 3);
@@ -404,13 +427,13 @@ function render() {
     if (r >= 3.4) {
       ctx.beginPath();
       let any = false;
-      for (const p of live) {
+      for (const p of lit) {
         if (!p.aw || !p.aw.some(a => a.r === 1)) continue;
         any = true;
         const y = p.sy - lr - (topNature(p) === 'baguette' ? 6.4 : 2.4);
         ctx.moveTo(p.sx + 1.6, y); ctx.arc(p.sx, y, 1.6, 0, 6.284);
       }
-      if (any) { ctx.fillStyle = C.crustDeep; ctx.fill(); }
+      if (any) { ctx.fillStyle = NAT_COL.baguette; ctx.fill(); }
     }
   }
 
@@ -743,11 +766,11 @@ function compFr(id) {
 function crest(size, label, sub) {
   const w = size, h = size;
   return `<svg width="${w}" height="${h}" viewBox="0 0 60 60" style="flex:0 0 auto">
-    <g fill="none" stroke="${C.crustDeep}" stroke-width="1.6" stroke-linecap="round">
+    <g fill="none" stroke="${AWARD}" stroke-width="1.6" stroke-linecap="round">
       <path d="M22 12 Q8 24 15 42 Q18 49 26 52"/>
       <path d="M38 12 Q52 24 45 42 Q42 49 34 52"/>
     </g>
-    <g fill="${C.crustDeep}" opacity=".85">
+    <g fill="${AWARD}" opacity=".85">
       <ellipse cx="16.5" cy="20" rx="3.4" ry="1.9" transform="rotate(-46 16.5 20)"/>
       <ellipse cx="12.6" cy="28" rx="3.4" ry="1.9" transform="rotate(-22 12.6 28)"/>
       <ellipse cx="12.8" cy="36.5" rx="3.4" ry="1.9" transform="rotate(6 12.8 36.5)"/>
@@ -759,7 +782,7 @@ function crest(size, label, sub) {
     </g>
     <circle cx="30" cy="9" r="2.6" fill="${C.crust}"/>
     <text x="30" y="31" text-anchor="middle" font-family="Cormorant Garamond,Georgia,serif"
-          font-size="17" font-weight="700" fill="${C.crustDeep}">${label}</text>
+          font-size="17" font-weight="700" fill="${AWARD}">${label}</text>
     <text x="30" y="42" text-anchor="middle" font-family="IBM Plex Mono,monospace"
           font-size="7.5" letter-spacing="1" fill="${C.mute}">${sub}</text>
   </svg>`;
@@ -2566,7 +2589,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v38';
+const BUILD = 'v39';
 const BOOT_AT = Date.now();
 
 async function boot() {
