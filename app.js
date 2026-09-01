@@ -1275,14 +1275,13 @@ function onChipRow(e) {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.f) setErrand(b.dataset.f);
   else if (b.dataset.k !== undefined) {
+    // a lit chip is a lit toggle: pressing it turns that one off, nothing else.
+    // Turning off the last one still on brings them all back, so the map is never
+    // empty and "none selected" means what it looks like it means.
     const i = +b.dataset.k;
-    if (state.kinds.every(Boolean)) {
-      state.kinds = [0, 1, 2, 3].map(k => k === i);   // out of "everything": just this
-    } else {
-      const next = state.kinds.slice();
-      next[i] = !next[i];
-      state.kinds = next.some(Boolean) ? next : [true, true, true, true];
-    }
+    const next = state.kinds.slice();
+    next[i] = !next[i];
+    state.kinds = next.some(Boolean) ? next : [true, true, true, true];
   } else if (b.dataset.t) {
     const id = b.dataset.t;
     state[id] = !state[id];
@@ -2567,7 +2566,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v37';
+const BUILD = 'v38';
 const BOOT_AT = Date.now();
 
 async function boot() {
