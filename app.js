@@ -259,19 +259,20 @@ function render() {
     if (visible(p) && !state.visits[p.id]) live.push(p);
   }
 
-  // an open door throws light — two soft passes stand in for a gradient
-  if (r >= 1.8) {
-    for (let pass = 0; pass < 2; pass++) {
+  // an open door throws light — three soft passes stand in for a gradient
+  {
+    const RAD = [3.9, 2.6, 1.7], ALPHA = [.13, .20, .30];
+    for (let pass = 0; pass < 3; pass++) {
       ctx.beginPath();
       let any = false;
       for (const q of live) {
         if (q.O !== true) continue;
         any = true;
-        const R = r * (pass ? 1.9 : 3.1);
+        const R = Math.max(r * RAD[pass], 4.5 - pass);
         ctx.moveTo(q.sx + R, q.sy); ctx.arc(q.sx, q.sy, R, 0, 6.284);
       }
       if (!any) break;
-      ctx.fillStyle = C.glow; ctx.globalAlpha = pass ? .17 : .09; ctx.fill();
+      ctx.fillStyle = C.glow; ctx.globalAlpha = ALPHA[pass]; ctx.fill();
     }
     ctx.globalAlpha = 1;
   }
@@ -909,6 +910,8 @@ function openSettings() {
       <div class="small" style="margin-top:0">${esc(T('install_why'))}</div>
     </div>
 
+    <button class="cta ghost" style="margin-top:18px" id="againIntro">${esc(T('intro_again'))}</button>
+
     <div class="lbl" style="margin-top:20px">${esc(T('records'))}</div>
     <div class="acts">
       <button class="act" id="doExport">
@@ -954,6 +957,7 @@ function openSettings() {
     const b = e.target.closest('button'); if (!b) return;
     setLang(b.dataset.l); openSettings();
   };
+  $('#againIntro').onclick = () => { closeSheets(); setTimeout(openWelcome, 240); };
   $('#doExport').onclick = exportRecords;
   $('#doImport').onclick = () => $('#fileIn').click();
   show('setSheet');
@@ -1029,22 +1033,18 @@ function paintChips() {
   const F = [['all', T('g_all'), [0, 1, 2, 3]],
              ['bread', T('g_bread'), [0, 1]],
              ['sweet', T('g_sweet'), [2, 3]]];
-  // the trades unfold under the errand you are actually on — never under "everything"
-  const openGroups = cur === 'all' ? []
-    : F.filter(([v, , ks]) => v !== 'all' && ks.some(k => state.kinds[k])).map(([v]) => v);
-
+  // everything on the row, in sections — nothing hidden a level down
   let html = '';
   for (const [v, l, ks] of F) {
+    if (v !== 'all') html += '<div class="chipsep"></div>';
     html += `<button class="chip ${cur === v ? 'on' : ''}" data-f="${v}"
       style="display:flex;align-items:center;gap:6px">${kindDots(ks, cur === v)}${esc(l)}</button>`;
-    if (openGroups.indexOf(v) < 0) continue;
-    html += '<div class="chipsep"></div>';
+    if (v === 'all') continue;
     for (const k of ks) {
       const on = state.kinds[k];
       html += `<button class="chip sub ${on ? 'on' : ''}" data-k="${k}"
         style="border-color:${on ? KIND[k] : 'var(--line)'}">${kindDots([k], false)}${esc(TRADE[k](T))}</button>`;
     }
-    html += '<div class="chipsep"></div>';
   }
   $('#chips').innerHTML = html;
   const TICK2 = `<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor"
@@ -1068,9 +1068,14 @@ $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
   if (b.dataset.k !== undefined) {
     const i = +b.dataset.k;
-    const next = state.kinds.slice();
-    next[i] = !next[i];
-    if (next.some(Boolean)) state.kinds = next;   // never leave an empty map
+    if (errandNow()) {
+      // coming from a whole group: the first trade tapped means only that one
+      state.kinds = [0, 1, 2, 3].map(k => k === i);
+    } else {
+      const next = state.kinds.slice();
+      next[i] = !next[i];
+      if (next.some(Boolean)) state.kinds = next; // never leave an empty map
+    }
   } else if (b.dataset.f === 'custom') { openFilters(); return; }
   else setErrand(b.dataset.f);
   paintChips(); paintStrip(); render();
@@ -2330,6 +2335,8 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
+const BOOT_AT = Date.now();
+
 async function boot() {
   try { state.lang = localStorage.getItem('miette.lang') || navLang(); } catch (e) { state.lang = navLang(); }
   document.documentElement.lang = state.lang;
@@ -2404,9 +2411,13 @@ async function boot() {
   $('#langbtn').textContent = state.lang.toUpperCase();
   $('#tagline').textContent = T('tagline');
   clampView(); render();
-  $('#boot').classList.add('fading');
-  setTimeout(() => $('#boot').classList.add('gone'), 760);
-  if (!state.meta.seen) setTimeout(openWelcome, 380);
+  // on a warm cache the data is back in 80 ms and the tower never gets seen
+  const held = Math.max(0, 1500 - (Date.now() - BOOT_AT));
+  setTimeout(() => {
+    $('#boot').classList.add('fading');
+    setTimeout(() => $('#boot').classList.add('gone'), 760);
+    if (!state.meta.seen) setTimeout(openWelcome, 300);
+  }, held);
 
   try {
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
@@ -2431,5 +2442,17 @@ boot().catch(err => {
 });
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // an older cache-first worker can outlive several releases; retire it at once
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'installed' && navigator.serviceWorker.controller) location.reload();
+        });
+      });
+      reg.update();
+    }).catch(() => {});
+  });
 }
