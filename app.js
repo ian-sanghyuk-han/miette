@@ -29,7 +29,9 @@ const KIND = ['#C4832E', '#A65B72', '#6E4A34', '#8E7098'];
 const state = {
   lang: 'ko', paris: null, places: [], comps: {},
   visits: {}, wish: {}, meta: {},
-  filter: 'all', onlyAward: false, onlyOpen: false, onlyIndie: false,
+  kinds: [true, true, true, true],
+  onlyAward: false, onlyOpen: false, onlyIndie: false,
+  onlyWish: false, onlyUnvisited: false,
   cx: 0, cy: 0, k: 0.3, kMin: 0.05, kMax: 7,
   here: null, sel: null, ready: false
 };
@@ -121,12 +123,39 @@ function ringPath(flat) {
   ctx.closePath();
 }
 
+/* Layer one and two choose a set of trades. Layer three subtracts from it. */
+const ERRAND = [
+  { id: 'all',   kinds: [0, 1, 2, 3] },
+  { id: 'bread', kinds: [0, 1] },
+  { id: 'sweet', kinds: [2, 3] }
+];
+const COND = [
+  { id: 'onlyOpen',      test: p => p.O === true },
+  { id: 'onlyAward',     test: p => !!p.aw },
+  { id: 'onlyIndie',     test: p => !p.b },
+  { id: 'onlyWish',      test: p => !!state.wish[p.id] },
+  { id: 'onlyUnvisited', test: p => !(state.visits[p.id] || []).length }
+];
+
+const ofKind = p => state.kinds[p.k];
+
 function visible(p) {
-  if (state.filter !== 'all' && p.k !== +state.filter) return false;
-  if (state.onlyAward && !p.aw) return false;
-  if (state.onlyIndie && p.b) return false;
-  if (state.onlyOpen && openNow(p.h) !== true) return false;
+  if (!state.kinds[p.k]) return false;
+  for (const c of COND) if (state[c.id] && !c.test(p)) return false;
   return true;
+}
+
+const condCount = () => COND.reduce((n, c) => n + (state[c.id] ? 1 : 0), 0);
+
+function errandNow() {
+  for (const e of ERRAND) {
+    if (state.kinds.every((on, i) => on === e.kinds.includes(i))) return e.id;
+  }
+  return null;                                   // she picked trades by hand
+}
+function setErrand(id) {
+  const e = ERRAND.find(x => x.id === id);
+  state.kinds = [0, 1, 2, 3].map(i => e.kinds.includes(i));
 }
 
 function render() {
@@ -889,28 +918,136 @@ function toast(msg) {
 
 /* -------------------------------------------------------------- chrome */
 function paintChips() {
-  const F = [
-    ['all', T('f_all')], ['0', T('f_bakery')], ['1', T('f_pastry')], ['2', T('f_choc')]
-  ];
-  $('#chips').innerHTML =
-    F.map(([v, l]) => `<button class="chip ${state.filter === v ? 'on' : ''}" data-f="${v}">${esc(l)}</button>`).join('') +
-    `<button class="chip ${state.onlyAward ? 'on' : ''}" data-t="onlyAward">${esc(T('f_award'))}</button>` +
-    `<button class="chip ${state.onlyOpen ? 'on' : ''}" data-t="onlyOpen">${esc(T('f_open'))}</button>` +
-    `<button class="chip ${state.onlyIndie ? 'on' : ''}" data-t="onlyIndie">${esc(T('f_indie'))}</button>`;
+  const cur = errandNow();
+  const F = [['all', T('g_all')], ['bread', T('g_bread')], ['sweet', T('g_sweet')]];
+  $('#chips').innerHTML = F.map(([v, l]) =>
+    `<button class="chip ${cur === v ? 'on' : ''}" data-f="${v}">${esc(l)}</button>`).join('') +
+    (cur === null ? `<button class="chip on" data-f="custom">${esc(T('g_custom'))}</button>` : '');
+  const n = condCount();
+  $('#filterLbl').textContent = T('f_cond');
+  $('#filterBtn').classList.toggle('on', n > 0);
+  const badge = $('#filterBtn').querySelector('b');
+  if (n) {
+    if (badge) badge.textContent = n;
+    else $('#filterBtn').insertAdjacentHTML('beforeend', `<b>${n}</b>`);
+  } else if (badge) badge.remove();
 }
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
-  if (b.dataset.f !== undefined) state.filter = b.dataset.f;
-  else state[b.dataset.t] = !state[b.dataset.t];
-  paintChips(); render();
+  if (b.dataset.f === 'custom') { openFilters(); return; }
+  setErrand(b.dataset.f);
+  paintChips(); paintStrip(); render();
 });
+$('#filterBtn').onclick = openFilters;
+
+const TICK = `<svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="#FCF8EE"
+    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-7"/></svg>`;
+
+function openFilters() {
+  const cur = errandNow();
+  const inKind = k => state.places.filter(p => p.k === k).length;
+
+  const errandRow = (e, name, desc) => `
+    <div class="frow" data-e="${e.id}">
+      <div class="fbox rnd ${cur === e.id ? 'on' : ''}">${cur === e.id ? TICK : ''}</div>
+      <div style="flex:1 1 auto;min-width:0">
+        <div class="fname">${esc(name)}</div>
+        <div class="fdesc">${esc(desc)}</div>
+      </div>
+      <div class="fcount">${state.places.filter(p => e.kinds.includes(p.k)).length}</div>
+    </div>`;
+
+  const tradeRow = (k, name) => `
+    <div class="frow" data-k="${k}" style="padding:9px 0">
+      <div class="fbox ${state.kinds[k] ? 'on' : ''}">${state.kinds[k] ? TICK : ''}</div>
+      <div style="flex:1 1 auto;min-width:0">
+        <div class="fname" style="font-size:12.5px;font-weight:400">${esc(name)}</div>
+      </div>
+      <div class="fcount">${inKind(k)}</div>
+    </div>`;
+
+  const base = state.places.filter(ofKind);
+  const condRow = (id, name, desc) => {
+    const c = COND.find(x => x.id === id);
+    return `<div class="frow" data-c="${id}">
+      <div class="fbox ${state[id] ? 'on' : ''}">${state[id] ? TICK : ''}</div>
+      <div style="flex:1 1 auto;min-width:0">
+        <div class="fname">${esc(name)}</div>
+        <div class="fdesc">${esc(desc)}</div>
+      </div>
+      <div class="fcount">${base.filter(c.test).length}</div>
+    </div>`;
+  };
+
+  $('#setSheet').onclick = null;
+  $('#setSheet').innerHTML = `
+    <div class="grip"></div>
+    <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('f_title'))}</div>
+
+    <div class="fhead" style="margin-top:16px">${esc(T('f_errand'))}</div>
+    <div style="font-size:11px;color:var(--mute);margin-top:4px">${esc(T('f_errand_help'))}</div>
+    <div style="margin-top:4px">
+      ${errandRow(ERRAND[1], T('g_bread'), T('g_bread_d'))}
+      ${errandRow(ERRAND[2], T('g_sweet'), T('g_sweet_d'))}
+      ${errandRow(ERRAND[0], T('g_all'), T('g_all_d'))}
+    </div>
+
+    <div class="fhead">${esc(T('f_trade'))}</div>
+    <div style="font-size:11px;color:var(--mute);margin-top:4px">${esc(T('f_trade_help'))}</div>
+    <div class="fsub" style="margin-top:4px">
+      ${tradeRow(0, T('f_bakery'))}${tradeRow(1, T('f_pastry'))}
+      ${tradeRow(2, T('f_choc'))}${tradeRow(3, T('f_bonbon'))}
+    </div>
+
+    <div class="fhead">${esc(T('f_cond'))}</div>
+    <div style="font-size:11px;color:var(--mute);margin-top:4px">${esc(T('f_cond_help'))}</div>
+    <div style="margin-top:4px">
+      ${condRow('onlyOpen', T('f_open'), T('f_open_d'))}
+      ${condRow('onlyAward', T('f_award'), T('f_award_d'))}
+      ${condRow('onlyIndie', T('f_indie'), T('f_indie_d'))}
+      ${condRow('onlyWish', T('wish'), T('f_wish_d'))}
+      ${condRow('onlyUnvisited', T('f_unvisited'), T('f_unvisited_d'))}
+    </div>
+
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:18px;
+         padding-top:13px;border-top:1px solid var(--line)">
+      <div style="font-size:12.5px;font-weight:600">${esc(T('f_showing'))}</div>
+      <div class="mono" style="font-size:16px;font-weight:500;color:${C.crustDeep}">${state.places.filter(visible).length}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="cta ghost" style="flex:0 0 auto;padding:0 18px" id="fReset">${esc(T('f_reset'))}</button>
+      <button class="cta" style="flex:1 1 auto" id="fDone">${esc(T('done'))}</button>
+    </div>`;
+
+  $('#setSheet').onclick = ev => {
+    const e = ev.target.closest('[data-e]');
+    const k = ev.target.closest('[data-k]');
+    const c = ev.target.closest('[data-c]');
+    if (e) setErrand(e.dataset.e);
+    else if (k) {
+      const i = +k.dataset.k;
+      const next = state.kinds.slice();
+      next[i] = !next[i];
+      if (next.some(Boolean)) state.kinds = next;   // never leave an empty map
+    } else if (c) state[c.dataset.c] = !state[c.dataset.c];
+    else return;
+    paintChips(); paintStrip(); render(); openFilters();
+  };
+  $('#fReset').onclick = () => {
+    setErrand('all');
+    COND.forEach(c => { state[c.id] = false; });
+    paintChips(); paintStrip(); render(); openFilters();
+  };
+  $('#fDone').onclick = closeSheets;
+  show('setSheet');
+}
 
 function paintStrip() {
   const v = stampedIds().length, a = arrDone().size;
   $('#strip').innerHTML =
     `<div>${esc(T('stat_visited'))} <b>${v}</b></div><div class="sep"></div>` +
     `<div>${esc(T('stat_arr'))} <b style="color:var(--crustDeep)">${a}</b></div><div class="sep"></div>` +
-    `<div class="mono" style="font-size:10.5px">${state.places.length} ${esc(T('stat_of'))}</div>`;
+    `<div class="mono" style="font-size:10.5px">${state.places.filter(visible).length} ${esc(T('stat_of'))}</div>`;
 }
 
 function paintTabs() {
