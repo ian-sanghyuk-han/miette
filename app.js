@@ -29,7 +29,7 @@ const KIND = ['#C4832E', '#A65B72', '#6E4A34', '#8E7098'];
 const state = {
   lang: 'ko', paris: null, places: [], comps: {},
   visits: {}, wish: {}, meta: {}, verdict: {}, duels: [], items: {},
-  diaryView: 'time', rankKind: 'all', tasteScope: 'all',
+  diaryView: 'time', rankKind: 'all', tasteScope: 'all', rankView: 'list',
   kinds: [true, true, true, true],
   onlyAward: false, onlyOpen: false, onlyIndie: false,
   onlyWish: false, onlyUnvisited: false,
@@ -1486,8 +1486,7 @@ const keyPlace = k => state.byId[k.split('#')[0]];
 const keyBread = k => (k.indexOf('#') > 0 ? k.split('#')[1] : null);
 function keyPrice(k) {
   const [id, code] = k.split('#');
-  if (!code) return 0;
-  const mine = itemsOf(id).filter(i => i.b === code && i.p);
+  const mine = itemsOf(id).filter(i => i.p && (!code || i.b === code));
   return mine.length ? mine.reduce((a, b) => a + b.p, 0) / mine.length : 0;
 }
 function breadLeagues() {
@@ -1634,6 +1633,92 @@ function diaryTaste(head, bind) {
   show('setSheet');
 }
 
+/* ---------- the same ranking, laid against what she paid */
+function valueChart(ranked) {
+  const pts = ranked.map((r, i) => ({ k: r.id, rank: i + 1, price: keyPrice(r.id) }))
+                    .filter(o => o.price > 0);
+  if (pts.length < 3) return null;
+
+  const W = 334, H = 330, L = 30, Rr = 14, Tp = 14, B = 40;
+  const prices = pts.map(o => o.price).sort((a, b) => a - b);
+  const lo = prices[0], hi = prices[prices.length - 1];
+  const span = Math.max(hi - lo, 20);
+  const pad = span * 0.14;
+  const x0 = lo - pad, x1 = hi + pad;
+  const maxRank = ranked.length;
+  const X = v => L + (v - x0) / (x1 - x0) * (W - L - Rr);
+  const Y = v => Tp + (v - 1) / Math.max(maxRank - 1, 1) * (H - Tp - B);
+
+  const mid = prices.length % 2 ? prices[(prices.length - 1) / 2]
+    : (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2;
+  const midRank = (1 + maxRank) / 2;
+  const mx = X(mid), my = Y(midRank);
+
+  // the honest headline: only claims that hold for these points
+  const cheap = pts.filter(o => o.price < mid);
+  const treasure = cheap.slice().sort((a, b) => a.rank - b.rank)[0];
+  const top = pts.slice().sort((a, b) => a.rank - b.rank)[0];
+  const cheapest = pts.slice().sort((a, b) => a.price - b.price)[0];
+  const inCorner = treasure && treasure.rank < midRank && treasure.price < mid;
+  let line;
+  if (top && cheapest && top.k === cheapest.k) line = T('q_top_cheap');
+  else if (inCorner) line = T('q_treasure_is', keyPlace(treasure.k).n);
+  else line = T('q_none_yet');
+  const mark = inCorner ? treasure : null;
+
+  const dot = o => {
+    const best = mark && o.k === mark.k;
+    return `<circle cx="${X(o.price).toFixed(1)}" cy="${Y(o.rank).toFixed(1)}"
+      r="${best ? 7 : 4.4}" fill="${best ? C.crust : C.mute}" fill-opacity="${best ? 1 : .72}"/>` +
+      (best ? `<circle cx="${X(o.price).toFixed(1)}" cy="${Y(o.rank).toFixed(1)}" r="11"
+        fill="none" stroke="${C.crustDeep}" stroke-width="1" opacity=".45"/>` : '');
+  };
+
+  const label = (o, dx, dy, anchor) => {
+    const q = keyPlace(o.k); if (!q) return '';
+    const lx = Math.max(L + 4, Math.min(W - Rr - 4, X(o.price) + dx));
+    const ly = Math.max(Tp + 14, Math.min(H - B - 18, Y(o.rank) + dy));
+    const name = q.n.length > 20 ? q.n.slice(0, 19) + '…' : q.n;
+    return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}"
+      text-anchor="${anchor}" font-family="'Cormorant Garamond',Georgia,serif" font-size="12.5"
+      font-weight="600" fill="${C.ink}">${esc(name)}</text>
+      <text x="${lx.toFixed(1)}" y="${(ly + 12).toFixed(1)}"
+      text-anchor="${anchor}" font-family="'IBM Plex Mono',monospace" font-size="9"
+      fill="${C.crustDeep}">${o.rank}${esc(T('q_place'))} · ${eur(o.price)}</text>`;
+  };
+  const side = mark && X(mark.price) > W * 0.55 ? -1 : 1;
+
+  return { svg: `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <rect x="${L}" y="${Tp}" width="${(mx - L).toFixed(1)}" height="${(my - Tp).toFixed(1)}"
+      fill="${C.crust}" opacity=".06"/>
+    <line x1="${mx.toFixed(1)}" y1="${Tp}" x2="${mx.toFixed(1)}" y2="${H - B}"
+      stroke="${C.faint}" stroke-width="1" stroke-dasharray="3 4"/>
+    <line x1="${L}" y1="${my.toFixed(1)}" x2="${W - Rr}" y2="${my.toFixed(1)}"
+      stroke="${C.faint}" stroke-width="1" stroke-dasharray="3 4"/>
+    <g font-family="'IBM Plex Sans KR',sans-serif" font-size="9.5">
+      <text x="${L + 6}" y="${Tp + 12}" fill="${C.crustDeep}" font-weight="600">${esc(T('q_treasure'))}</text>
+      <text x="${W - Rr - 4}" y="${Tp + 12}" text-anchor="end" fill="${C.mute}">${esc(T('q_worth'))}</text>
+      <text x="${L + 6}" y="${H - B - 5}" fill="${C.mute}">${esc(T('q_meh'))}</text>
+      <text x="${W - Rr - 4}" y="${H - B - 5}" text-anchor="end" fill="${C.mute}">${esc(T('q_no'))}</text>
+    </g>
+    <g stroke="${C.ink}" stroke-width=".9" opacity=".55">
+      <line x1="${L}" y1="${Tp}" x2="${L}" y2="${H - B}"/>
+      <line x1="${L}" y1="${H - B}" x2="${W - Rr}" y2="${H - B}"/>
+    </g>
+    <g font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="${C.mute}">
+      <text x="${L - 5}" y="${Tp + 4}" text-anchor="end">1</text>
+      <text x="${L - 5}" y="${(H - B)}" text-anchor="end">${maxRank}</text>
+      <text x="${L}" y="${H - B + 15}" text-anchor="start">${eur(lo)}</text>
+      <text x="${mx.toFixed(1)}" y="${H - B + 15}" text-anchor="middle">${eur(mid)}</text>
+      <text x="${W - Rr}" y="${H - B + 15}" text-anchor="end">${eur(hi)}</text>
+      <text x="${L}" y="${H - 6}" text-anchor="start">${esc(T('q_rank_axis'))}</text>
+      <text x="${W - Rr}" y="${H - 6}" text-anchor="end">${esc(T('q_price_axis'))}</text>
+    </g>
+    ${pts.map(dot).join('')}
+    ${mark ? label(mark, side * 14, -12, side > 0 ? 'start' : 'end') : ''}
+  </svg>`, line, n: pts.length, lo, hi, mid };
+}
+
 /* ---------- her ranking, and the duel that builds it */
 function diaryRank(head, bind) {
   const K = [['all', T('r_shop')], ['0', T('f_bakery')], ['1', T('f_pastry')], ['2', T('f_choc')]]
@@ -1646,6 +1731,11 @@ function diaryRank(head, bind) {
 
   const chips = `<div style="display:flex;gap:6px;margin-top:12px;overflow-x:auto">
     ${K.map(([v, l]) => `<button class="chip ${state.rankKind === v ? 'on' : ''}" data-rk="${v}">${esc(l)}</button>`).join('')}
+  </div>`;
+  const chart = ids.length >= 2 ? valueChart(ranked) : null;
+  const swap = `<div class="seg" style="margin-top:10px">
+    <button data-rv="list" class="${state.rankView === 'list' ? 'on' : ''}">${esc(T('q_list'))}</button>
+    <button data-rv="value" class="${state.rankView === 'value' ? 'on' : ''}">${esc(T('q_value'))}</button>
   </div>`;
 
   let body;
@@ -1684,8 +1774,33 @@ function diaryRank(head, bind) {
              : `<div class="small" style="text-align:center;margin-top:16px">${esc(T('r_done'))}</div>`}`;
   }
 
-  $('#setSheet').innerHTML = head + chips + body;
+  if (state.rankView === 'value' && ids.length >= 2) {
+    body = chart ? `
+      <div style="display:flex;justify-content:center;margin-top:12px">${chart.svg}</div>
+      <div style="border-left:3px solid ${C.crust};padding:3px 0 3px 12px;margin-top:6px">
+        <div style="font-size:12.5px;line-height:1.6">${esc(chart.line)}</div>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:16px">
+        <div style="flex:1 1 0;border:1px solid var(--line);background:var(--card);padding:10px 11px">
+          <div class="mono" style="font-size:16px;font-weight:500;color:${C.crustDeep}">${eur(chart.mid)}</div>
+          <div style="font-size:10px;color:var(--mute);margin-top:2px">${esc(T('q_mid'))}</div></div>
+        <div style="flex:1 1 0;border:1px solid var(--line);background:var(--card);padding:10px 11px">
+          <div class="mono" style="font-size:16px;font-weight:500">${eur(chart.hi - chart.lo)}</div>
+          <div style="font-size:10px;color:var(--mute);margin-top:2px">${esc(T('q_spread'))}</div></div>
+        <div style="flex:1 1 0;border:1px solid var(--line);background:var(--card);padding:10px 11px">
+          <div class="mono" style="font-size:16px;font-weight:500">${chart.n}</div>
+          <div style="font-size:10px;color:var(--mute);margin-top:2px">${esc(T('q_priced'))}</div></div>
+      </div>`
+    : `<div style="text-align:center;padding:40px 0 26px">
+        <div style="font-size:13px;font-weight:600">${esc(T('q_need'))}</div>
+        <div style="font-size:11.5px;color:var(--mute);margin-top:6px">${esc(T('q_need_d'))}</div></div>`;
+  }
+
+  $('#setSheet').innerHTML = head + chips + (ids.length >= 2 ? swap : '') + body;
   bind();
+  $('#setSheet').querySelectorAll('[data-rv]').forEach(b => {
+    b.onclick = ev => { ev.stopPropagation(); state.rankView = b.dataset.rv; openLog(); };
+  });
   $('#setSheet').querySelectorAll('[data-rk]').forEach(b => {
     b.onclick = ev => { ev.stopPropagation(); state.rankKind = b.dataset.rk; openLog(); };
   });
