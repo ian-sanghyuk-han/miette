@@ -39,6 +39,10 @@ const C = {
   ink: '#2A2118', ink2: '#544737', mute: '#6F6250', line: '#E2D6B9',
   faint: '#CFC0A0', crust: '#C4832E', crustDeep: '#8C5216',
   olive: '#77794F', seine: '#9DAEAC', glow: '#E8A33A',
+  /* Her own record is drawn in the map's own ink — the one dark tone nothing else
+     uses, so it never blends with a trade colour, and so the thing she put there
+     is the strongest mark on the page. Overlapping stamps really do darken. */
+  mine: '#2A2118',
   road: '#FDFAF3', roadEdge: '#DFCFA9', park: '#A8B183'
 };
 
@@ -446,7 +450,12 @@ function render() {
       any = true;
       ctx.moveTo(p.sx + r + 3.4, p.sy); ctx.arc(p.sx, p.sy, r + 3.4, 0, 6.284);
     }
-    if (any) { ctx.strokeStyle = C.olive; ctx.lineWidth = 1.8; ctx.stroke(); }
+    if (any) {
+      ctx.strokeStyle = C.mine; ctx.lineWidth = 1.7;
+      ctx.setLineDash([Math.max(2.4, r * .6), Math.max(2, r * .5)]);
+      ctx.globalAlpha = .85; ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+    }
 
     if (any && r >= 3) {                          // three curls rising off it
       const w = r * .62, h = r * 1.5, top = -(r + 5.6);
@@ -459,8 +468,8 @@ function render() {
           ctx.quadraticCurveTo(x + w, y - h * .45, x, y - h);
         }
       }
-      ctx.strokeStyle = C.olive; ctx.lineWidth = Math.min(1.5, r * .38);
-      ctx.lineCap = 'round'; ctx.globalAlpha = .85; ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = C.mine; ctx.lineWidth = Math.min(1.5, r * .38);
+      ctx.lineCap = 'round'; ctx.globalAlpha = .8; ctx.stroke(); ctx.globalAlpha = 1;
     }
   }
 
@@ -469,7 +478,7 @@ function render() {
   if (walked.length > 1) {
     ctx.beginPath();
     walked.forEach((p, i) => i ? ctx.lineTo(sx(p.WX), sy(p.WY)) : ctx.moveTo(sx(p.WX), sy(p.WY)));
-    ctx.strokeStyle = C.crustDeep; ctx.lineWidth = Math.max(2, 4 * Math.min(k, 1));
+    ctx.strokeStyle = C.mine; ctx.lineWidth = Math.max(2, 4 * Math.min(k, 1));
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.setLineDash([1, Math.max(6, 9 * Math.min(k, 1))]);
     ctx.globalAlpha = .55; ctx.stroke();
@@ -486,11 +495,11 @@ function render() {
       const off = i * rr * 0.26;
       ctx.beginPath();
       ctx.arc(p.sx + Math.cos(a) * off, p.sy + Math.sin(a) * off, rr, 0, 6.284);
-      ctx.fillStyle = C.crust; ctx.globalAlpha = 0.42 + 0.16 * i; ctx.fill();
+      ctx.fillStyle = C.mine; ctx.globalAlpha = 0.40 + 0.17 * i; ctx.fill();
     }
     ctx.globalAlpha = 1;
     ctx.beginPath(); ctx.arc(p.sx, p.sy, rr + 3.2, 0, 6.284);
-    ctx.strokeStyle = C.crustDeep; ctx.lineWidth = 1; ctx.globalAlpha = .5; ctx.stroke();
+    ctx.strokeStyle = C.mine; ctx.lineWidth = 1; ctx.globalAlpha = .45; ctx.stroke();
     ctx.globalAlpha = 1;
   }
 
@@ -1258,10 +1267,14 @@ function tradeChip(k) {
     background:${on ? KIND[k] : 'rgba(252,248,238,.9)'};
     color:${on ? '#FCF8EE' : KIND_INK[k]}">${esc(TRADE[k](T))}</button>`;
 }
+const MINE_CHIP = { onlyVisited: 1, onlyWish: 1 };
 function markChip(id, label, mark) {
   const on = state[id];
-  return `<button class="tog ${on ? 'on' : ''}" data-t="${id}"
-    style="color:${on ? 'inherit' : C.ink2}">${MARK[mark]}${esc(label)}</button>`;
+  const ink = MINE_CHIP[id];
+  const style = on
+    ? (ink ? `background:${C.mine};border-color:${C.mine};color:#FCF8EE` : '')
+    : `color:${ink ? C.mine : C.ink2}${ink ? ';border-color:rgba(42,33,24,.34)' : ''}`;
+  return `<button class="tog ${on ? 'on' : ''}" data-t="${id}" style="${style}">${MARK[mark]}${esc(label)}</button>`;
 }
 
 function paintChips() {
@@ -1590,12 +1603,14 @@ function openLegend() {
         <path d="M9.4 8.6 Q5.6 13 9.4 17.4"/><path d="M24.6 8.6 Q28.4 13 24.6 17.4"/>
         <path d="M6.6 7.4 Q1.8 13 6.6 18.6"/><path d="M27.4 7.4 Q32.2 13 27.4 18.6"/></g>
         <circle cx="17" cy="3.4" r="1.7" fill="${C.crustDeep}"/></svg>`, T('legend_multi'))}
-      ${row(`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="5" fill="${C.crust}" opacity=".5"/>
-        <circle cx="13" cy="13" r="9" fill="none" stroke="${C.olive}" stroke-width="1.8"/></svg>`, T('legend_wish'))}
+      ${row(`<svg width="30" height="26" viewBox="0 0 30 26"><circle cx="15" cy="15" r="4.4" fill="${C.crust}" opacity=".45"/>
+        <circle cx="15" cy="15" r="8.4" fill="none" stroke="${C.mine}" stroke-width="1.7" stroke-dasharray="3.4 2.8"/>
+        <g stroke="${C.mine}" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".8">
+        <path d="M9.5 3.6 q3 -2.4 0 -5"/><path d="M15 2.6 q3 -2.4 0 -5"/><path d="M20.5 3.6 q3 -2.4 0 -5"/></g></svg>`, T('legend_wish'))}
       ${row(`<svg width="30" height="26" viewBox="0 0 30 26">
-        <circle cx="12" cy="13" r="6.4" fill="${C.crust}" opacity=".5"/>
-        <circle cx="16" cy="13" r="6.4" fill="${C.crust}" opacity=".8"/>
-        <circle cx="14" cy="13" r="9.6" fill="none" stroke="${C.crustDeep}" stroke-width="1" opacity=".5"/></svg>`, T('legend_stamp'))}
+        <circle cx="12" cy="13" r="6.4" fill="${C.mine}" opacity=".5"/>
+        <circle cx="16" cy="13" r="6.4" fill="${C.mine}" opacity=".85"/>
+        <circle cx="14" cy="13" r="9.6" fill="none" stroke="${C.mine}" stroke-width="1" opacity=".45"/></svg>`, T('legend_stamp'))}
       ${row(`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="${C.seine}" opacity=".16"/>
         <circle cx="13" cy="13" r="5" fill="${C.seine}" stroke="${C.card}" stroke-width="2"/></svg>`, T('legend_here'))}
     </div>
@@ -2589,7 +2604,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v39';
+const BUILD = 'v40';
 const BOOT_AT = Date.now();
 
 async function boot() {
