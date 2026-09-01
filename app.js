@@ -5,6 +5,18 @@
 
 /* ------------------------------------------------------------------ basics */
 const $ = s => document.querySelector(s);
+
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+/* A home-screen app has no second tab to open into, so target="_blank" silently
+   does nothing. Hand the URL to the system instead, and fall back if it refuses. */
+function openExternal(url) {
+  if (/^(tel:|maps:|comgooglemaps:)/.test(url)) { location.href = url; return; }
+  let w = null;
+  try { w = window.open(url, '_blank', 'noopener'); } catch (e) { /* blocked */ }
+  if (!w) location.href = url;
+}
 const KX = Math.cos(48.858 * Math.PI / 180);   // east-west squeeze at Paris' latitude
 const S = 40000;                               // world px per degree of latitude
 const KM = S / 111.32;                         // world px per kilometre
@@ -289,14 +301,15 @@ function render() {
 
   // an open door throws light — three soft passes stand in for a gradient
   {
-    const RAD = [3.9, 2.6, 1.7], ALPHA = [.13, .20, .30];
+    // a halo four dot-widths across is weather, not a signal — keep it close in
+    const RAD = [2.35, 1.75, 1.32], ALPHA = [.17, .25, .34], CAP = [15, 11, 8];
     for (let pass = 0; pass < 3; pass++) {
       ctx.beginPath();
       let any = false;
       for (const q of live) {
         if (q.O !== true) continue;
         any = true;
-        const R = Math.max(r * RAD[pass], 4.5 - pass);
+        const R = Math.min(Math.max(r * RAD[pass], 4.6 - pass), CAP[pass]);
         ctx.moveTo(q.sx + R, q.sy); ctx.arc(q.sx, q.sy, R, 0, 6.284);
       }
       if (!any) break;
@@ -445,9 +458,13 @@ function render() {
   }
 
   if (state.sel) {
-    const p = state.sel;
-    ctx.beginPath(); ctx.arc(sx(p.WX), sy(p.WY), r + 9, 0, 6.284);
-    ctx.strokeStyle = C.crustDeep; ctx.lineWidth = 1.6; ctx.stroke();
+    const p = state.sel, x = sx(p.WX), y = sy(p.WY);
+    ctx.beginPath(); ctx.arc(x, y, r + 16, 0, 6.284);
+    ctx.fillStyle = C.crustDeep; ctx.globalAlpha = .10; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.arc(x, y, r + 9, 0, 6.284);
+    ctx.strokeStyle = C.crustDeep; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, r + 13.5, 0, 6.284);
+    ctx.lineWidth = 1; ctx.globalAlpha = .5; ctx.stroke(); ctx.globalAlpha = 1;
   }
 
   if (state.here) {
@@ -734,6 +751,16 @@ function crest(size, label, sub) {
   </svg>`;
 }
 
+/* Centre puts a shop under the card that is about to cover the lower half, so
+   aim for the middle of what will still be visible. */
+function focusPlace(p, zoom) {
+  state.cx = p.WX;
+  state.cy = p.WY + (VH * 0.22) / Math.max(state.k, 0.001);
+  if (zoom) state.k = Math.max(state.k, zoom);
+  state.cy = p.WY + (VH * 0.22) / state.k;
+  clampView();
+}
+
 function openPlace(p) {
   state.sel = p; render();
   const n = (state.visits[p.id] || []).length;
@@ -741,7 +768,11 @@ function openPlace(p) {
   const aw = (p.aw || []).slice(0, 6);
   const gmaps = 'https://www.google.com/maps/search/?api=1&query=' +
     encodeURIComponent(p.n + ' ' + (p.s || '') + ' Paris');
-  const route = 'https://www.google.com/maps/dir/?api=1&destination=' + p.y + ',' + p.x;
+  // on iPhone, walk her there in the app she already has
+  const route = IOS
+    ? 'maps://?daddr=' + p.y + ',' + p.x + '&dirflg=w'
+    : 'https://www.google.com/maps/dir/?api=1&destination=' + p.y + ',' + p.x +
+      '&travelmode=walking';
 
   $('#placeSheet').innerHTML = `
     <div class="grip"></div>
@@ -800,15 +831,15 @@ function openPlace(p) {
 
     ${!p.s ? `<div class="small" style="margin-top:6px">${esc(T('no_addr_d'))}</div>` : ''}
     <div class="acts">
-      ${p.t ? `<a class="act" href="tel:${esc(p.t.replace(/\s/g, ''))}">
+      ${p.t ? `<button class="act" data-url="tel:${esc(p.t.replace(/\s/g, ''))}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${C.ink2}" stroke-width="1.6" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.5 2.1L8.1 9.8a16 16 0 006 6l1.3-1.2a2 2 0 012.1-.5c.9.3 1.8.6 2.7.7a2 2 0 011.8 2.1z"/></svg>
-        <span>${esc(T('call'))}</span></a>` : ''}
-      <a class="act" href="${route}" target="_blank" rel="noopener">
+        <span>${esc(T('call'))}</span></button>` : ''}
+      <button class="act" data-url="${esc(route)}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${C.ink2}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-8-8 19-2-8z"/></svg>
-        <span>${esc(T('route'))}</span></a>
-      <a class="act" href="${gmaps}" target="_blank" rel="noopener">
+        <span>${esc(T('route'))}</span></button>
+      <button class="act" data-url="${esc(gmaps)}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${C.ink2}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/></svg>
-        <span>${esc(T('gmaps'))}</span></a>
+        <span>${esc(T('gmaps'))}</span></button>
     </div>
     <div class="note">${esc(T('outside'))}</div>
 
@@ -840,6 +871,9 @@ function openPlace(p) {
     <button class="cta ghost" style="margin-top:9px" id="doBasket">${esc(T('i_edit'))}</button>
     <button class="cta ghost" style="margin-top:9px" id="doWish">${esc(state.wish[p.id] ? T('wish_remove') : T('wish_add'))}</button>
   `;
+  $('#placeSheet').querySelectorAll('[data-url]').forEach(b => {
+    b.onclick = () => openExternal(b.dataset.url);
+  });
   $('#doStamp').onclick = () => stamp(p);
   const bb = $('#doBasket'); if (bb) bb.onclick = () => openBasket(p);
   $('#doWish').onclick = () => {
@@ -1106,6 +1140,14 @@ function toast(msg) {
 /* -------------------------------------------------------------- chrome */
 /* marks for the things that are not about what a shop sells */
 const MARK = {
+  bread: `<svg width="17" height="17" viewBox="0 0 20 20" fill="none" style="flex:0 0 auto">
+    <g transform="rotate(-38 10 10)" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+      <ellipse cx="10" cy="10" rx="3" ry="7.6"/>
+      <path d="M8.2 6.4l3.6-1.1M8.1 9.9l3.8-1.1M8.2 13.4l3.6-1.1"/></g></svg>`,
+  sweet: `<svg width="17" height="17" viewBox="0 0 20 20" fill="none" style="flex:0 0 auto">
+    <g stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="6" y="6" width="8" height="8" rx="1.4"/>
+      <path d="M6 6l8 8"/><path d="M4.4 7.4L2.4 5.6v4.2l2-1.2M15.6 12.6l2 1.8v-4.2l-2 1.2"/></g></svg>`,
   glow: `<svg width="15" height="15" viewBox="0 0 16 16" style="flex:0 0 auto">
     <circle cx="8" cy="8" r="7" fill="#E8A33A" opacity=".38"/>
     <circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg>`,
@@ -1151,12 +1193,15 @@ function paintChips() {
   $('#chips').innerHTML =
     `<button class="chip ${all ? 'on' : ''}" data-f="all">${esc(T('g_all'))}</button>` +
     `<div class="chipsep"></div>` +
-    markChip('onlyOpen', T('f_open'), 'glow');
+    `<button class="tog lamp ${state.onlyOpen ? 'on' : ''}" data-t="onlyOpen">${MARK.glow}${esc(T('f_open'))}</button>`;
   // the groups are labels; the trades belonging to them are the buttons
+  // a loaf and a bonbon say "bread" and "sweets" in a sixth of the width
+  const gicon = m => `<span class="grouplbl" style="color:var(--mute);display:flex;
+    align-items:center" title="${esc(m === 'bread' ? T('g_bread') : T('g_sweet'))}">${MARK[m]}</span>`;
   $('#chips2').innerHTML =
-    `<span class="grouplbl">${esc(T('g_bread'))}</span>` + tradeChip(0) + tradeChip(1) +
+    gicon('bread') + tradeChip(0) + tradeChip(1) +
     `<div class="chipsep"></div>` +
-    `<span class="grouplbl">${esc(T('g_sweet'))}</span>` + tradeChip(2) + tradeChip(3);
+    gicon('sweet') + tradeChip(2) + tradeChip(3);
 
   $('#chips3').innerHTML =
     markChip('onlyAward', awardChipLabel(), 'award') +
@@ -1486,8 +1531,7 @@ function openNearby() {
   $('#setSheet').onclick = e => {
     const row = e.target.closest('[data-id]'); if (!row) return;
     const q = state.byId[row.dataset.id]; if (!q) return;
-    state.cx = q.WX; state.cy = q.WY; state.k = Math.max(state.k, 1.4);
-    clampView(); render(); openPlace(q);
+    focusPlace(q, 1.6); render(); openPlace(q);
   };
   const lb = $('#nbLocate');
   if (lb) lb.onclick = () => { state.follow = true; paintLocateBtn(); startWatch(true); };
@@ -1816,7 +1860,7 @@ function openLog() {
     $('#setSheet').onclick = e => {
       const row = e.target.closest('[data-id]'); if (!row) return;
       const q = state.byId[row.dataset.id];
-      if (q) { state.cx = q.WX; state.cy = q.WY; state.k = Math.max(state.k, .9); clampView(); backToMap(); openPlace(q); }
+      if (q) { focusPlace(q, 1.1); backToMap(); openPlace(q); }
     };
   };
   if (state.diaryView === 'good') { diaryGood(head, bind); return; }
@@ -2455,8 +2499,7 @@ $('#searchOut').addEventListener('click', e => {
   const b = e.target.closest('[data-sid]'); if (!b) return;
   const q = state.byId[b.dataset.sid]; if (!q) return;
   closeSearch();
-  state.cx = q.WX; state.cy = q.WY; state.k = Math.max(state.k, 1.4);
-  clampView(); render(); openPlace(q);
+  focusPlace(q, 1.6); render(); openPlace(q);
 });
 
 /* ------------------------------------------------------------- the language */
@@ -2532,7 +2575,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v25';
+const BUILD = 'v26';
 const BOOT_AT = Date.now();
 
 async function boot() {

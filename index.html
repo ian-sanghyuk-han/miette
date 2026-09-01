@@ -70,10 +70,13 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 #chips::-webkit-scrollbar,#chips2::-webkit-scrollbar,#chips3::-webkit-scrollbar{display:none}
 #barSep{width:1px;height:22px;background:var(--line);flex:0 0 auto}
 /* square = tick as many as you like; the pills above are pick-one */
-.tog{display:flex;align-items:center;gap:5px;height:27px;padding:0 10px;flex:0 0 auto;
-  border:1px solid var(--line);border-radius:4px;background:rgba(252,248,238,.86);
+.tog{display:flex;align-items:center;gap:5px;height:27px;padding:0 11px;flex:0 0 auto;
+  border:1px solid var(--line);border-radius:14px;background:rgba(252,248,238,.86);
   color:var(--ink2);font-size:11px;white-space:nowrap}
 .tog.on{border-color:var(--crustDeep);background:var(--crustDeep);color:var(--card);font-weight:500}
+/* open-now is a state, not a category: same shape, its own warmth */
+.tog.lamp{border-color:#E0B26A;background:rgba(232,163,58,.10);color:#8C5216}
+.tog.lamp.on{border-color:#D9962F;background:#E8A33A;color:#FCF8EE;font-weight:600}
 .tog svg{opacity:.55}
 .tog.on svg{opacity:1}
 #filterBtn{display:flex;align-items:center;gap:6px;height:32px;padding:0 11px;flex:0 0 auto;
