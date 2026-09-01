@@ -387,17 +387,31 @@ function render() {
     }
   }
 
-  // want-to-go — an outer ring, in the trade's own colour
-  for (let kind = 0; kind < 4; kind++) {
+  // want-to-go — an olive ring, and the steam its chip is drawn with
+  {
     ctx.beginPath();
     let any = false;
     for (const p of seen) {
-      if (p.k !== kind || !state.wish[p.id] || state.visits[p.id]) continue;
+      if (!state.wish[p.id] || state.visits[p.id]) continue;
       any = true;
       ctx.moveTo(p.sx + r + 3.4, p.sy); ctx.arc(p.sx, p.sy, r + 3.4, 0, 6.284);
     }
-    if (!any) continue;
-    ctx.strokeStyle = C.olive; ctx.lineWidth = 1.8; ctx.stroke();
+    if (any) { ctx.strokeStyle = C.olive; ctx.lineWidth = 1.8; ctx.stroke(); }
+
+    if (any && r >= 3) {                          // three curls rising off it
+      const w = r * .62, h = r * 1.5, top = -(r + 5.6);
+      ctx.beginPath();
+      for (const p of seen) {
+        if (!state.wish[p.id] || state.visits[p.id]) continue;
+        for (let i = -1; i <= 1; i++) {
+          const x = p.sx + i * w * 1.5, y = p.sy + top;
+          ctx.moveTo(x, y);
+          ctx.quadraticCurveTo(x + w, y - h * .45, x, y - h);
+        }
+      }
+      ctx.strokeStyle = C.olive; ctx.lineWidth = Math.min(1.5, r * .38);
+      ctx.lineCap = 'round'; ctx.globalAlpha = .85; ctx.stroke(); ctx.globalAlpha = 1;
+    }
   }
 
   // the trail, oldest to newest
@@ -2505,8 +2519,7 @@ function openWelcome() {
     </div>
     <div class="rule" style="margin:20px 0 16px"></div>
     <div style="font-size:13.5px;line-height:1.65">${esc(T('welcome_hi'))}</div>
-    <div style="font-size:13.5px;line-height:1.65;margin-top:6px;color:var(--ink2)">${esc(T('welcome_1'))}</div>
-    <div class="ser" style="font-style:italic;font-size:15px;color:var(--ink2);white-space:pre-line;margin-top:16px;line-height:1.5">${esc(T('welcome_2'))}</div>
+    <div class="ser" style="font-style:italic;font-size:15px;color:var(--ink2);white-space:pre-line;margin-top:14px;line-height:1.5">${esc(T('welcome_2'))}</div>
     <div style="text-align:center;margin:26px 0 4px">
       <svg width="34" height="12" viewBox="0 0 34 12" style="opacity:.5">
         <g stroke="${C.crust}" stroke-width="2" stroke-linecap="round">
@@ -2519,7 +2532,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v24';
+const BUILD = 'v25';
 const BOOT_AT = Date.now();
 
 async function boot() {
