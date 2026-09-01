@@ -1022,15 +1022,31 @@ function kindDots(kinds, on) {
       fill="${on ? '#FCF8EE' : KIND[k]}" fill-opacity="${on ? .95 : 1}"/>`).join('')}</svg>`;
 }
 
+const TRADE = [T => T('f_bakery'), T => T('f_pastry'), T => T('f_choc'), T => T('f_bonbon')];
+
 function paintChips() {
   const cur = errandNow();
   const F = [['all', T('g_all'), [0, 1, 2, 3]],
              ['bread', T('g_bread'), [0, 1]],
              ['sweet', T('g_sweet'), [2, 3]]];
-  $('#chips').innerHTML = F.map(([v, l, ks]) =>
-    `<button class="chip ${cur === v ? 'on' : ''}" data-f="${v}"
-      style="display:flex;align-items:center;gap:6px">${kindDots(ks, cur === v)}${esc(l)}</button>`).join('') +
-    (cur === null ? `<button class="chip on" data-f="custom">${esc(T('g_custom'))}</button>` : '');
+  // the trades unfold under the errand you are actually on — never under "everything"
+  const openGroups = cur === 'all' ? []
+    : F.filter(([v, , ks]) => v !== 'all' && ks.some(k => state.kinds[k])).map(([v]) => v);
+
+  let html = '';
+  for (const [v, l, ks] of F) {
+    html += `<button class="chip ${cur === v ? 'on' : ''}" data-f="${v}"
+      style="display:flex;align-items:center;gap:6px">${kindDots(ks, cur === v)}${esc(l)}</button>`;
+    if (openGroups.indexOf(v) < 0) continue;
+    html += '<div class="chipsep"></div>';
+    for (const k of ks) {
+      const on = state.kinds[k];
+      html += `<button class="chip sub ${on ? 'on' : ''}" data-k="${k}"
+        style="border-color:${on ? KIND[k] : 'var(--line)'}">${kindDots([k], false)}${esc(TRADE[k](T))}</button>`;
+    }
+    html += '<div class="chipsep"></div>';
+  }
+  $('#chips').innerHTML = html;
   const TICK2 = `<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor"
       stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-7"/></svg>`;
   const R2 = [['onlyAward', awardChipLabel()], ['onlyIndie', T('f_indie')],
@@ -1050,8 +1066,13 @@ function paintChips() {
 }
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
-  if (b.dataset.f === 'custom') { openFilters(); return; }
-  setErrand(b.dataset.f);
+  if (b.dataset.k !== undefined) {
+    const i = +b.dataset.k;
+    const next = state.kinds.slice();
+    next[i] = !next[i];
+    if (next.some(Boolean)) state.kinds = next;   // never leave an empty map
+  } else if (b.dataset.f === 'custom') { openFilters(); return; }
+  else setErrand(b.dataset.f);
   paintChips(); paintStrip(); render();
 });
 $('#chips2').addEventListener('click', e => {
