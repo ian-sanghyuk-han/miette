@@ -32,8 +32,8 @@ const state = {
   diaryView: 'time', rankKind: 'all', tasteScope: 'all', rankView: 'list',
   kinds: [true, true, true, true],
   onlyAward: false, onlyOpen: false, onlyIndie: false,
-  onlyWish: false, onlyUnvisited: false,
-  awardComps: [], onlyWinner: false, onlyMulti: false,
+  onlyWish: false, onlyUnvisited: false, onlyChain: false,
+  awardComps: [], onlyWinner: false, onlyMulti: false, awardNat: null,
   cx: 0, cy: 0, k: 0.3, kMin: 0.05, kMax: 7,
   here: null, sel: null, ready: false
 };
@@ -140,11 +140,31 @@ const COND = [
   { id: 'onlyOpen',      test: p => p.O === true },
   { id: 'onlyAward',     test: p => awardOk(p) },
   { id: 'onlyIndie',     test: p => !p.b },
+  { id: 'onlyChain',     test: p => !!p.b },
   { id: 'onlyWish',      test: p => !!state.wish[p.id] },
   { id: 'onlyUnvisited', test: p => !(state.visits[p.id] || []).length }
 ];
 
 const ofKind = p => state.kinds[p.k];
+const isChain = p => !!p.b;
+
+/* A prize for the city's baguette, a prize for the whole house and a placing for
+   one pastry are different claims. The competition's own subject decides which. */
+const NATURE = { baguette: 'baguette', artisan: 'shop' };
+function awNature(compId) {
+  const c = state.comps[compId];
+  return (c && NATURE[c.bread]) || 'item';
+}
+const NAT_ORDER = { baguette: 0, shop: 1, item: 2 };
+function topNature(p) {
+  let best = null;
+  for (const a of (p.aw || [])) {
+    const n = awNature(a.c);
+    if (best === null || NAT_ORDER[n] < NAT_ORDER[best]) best = n;
+  }
+  return best;
+}
+const NAT_COL = { baguette: '#7A4310', shop: '#9A6B3A', item: '#C4832E' };
 
 /* The competitions are per-item, so "awarded" can be too. With nothing chosen it
    means any placing; choose a contest and it means that contest. */
@@ -153,6 +173,7 @@ function awardOk(p) {
   let list = p.aw;
   if (state.onlyWinner) list = list.filter(a => a.r === 1);
   if (state.awardComps.length) list = list.filter(a => state.awardComps.indexOf(a.c) >= 0);
+  if (state.awardNat) list = list.filter(a => awNature(a.c) === state.awardNat);
   if (state.onlyMulti && p.aw.length < 2) return false;
   return list.length > 0;
 }
@@ -179,6 +200,12 @@ function errandNow() {
 function setErrand(id) {
   const e = ERRAND.find(x => x.id === id);
   state.kinds = [0, 1, 2, 3].map(i => e.kinds.includes(i));
+}
+
+/* a circle is one house; a square is a name with several doors */
+function markPath(p, r) {
+  if (p.b) { ctx.rect(p.sx - r, p.sy - r, r * 2, r * 2); return; }
+  ctx.moveTo(p.sx + r, p.sy); ctx.arc(p.sx, p.sy, r, 0, 6.284);
 }
 
 function render() {
@@ -282,7 +309,7 @@ function render() {
     ctx.beginPath();
     for (const p of live) {
       if (p.k !== kind || p.O !== true) continue;
-      ctx.moveTo(p.sx + r, p.sy); ctx.arc(p.sx, p.sy, r, 0, 6.284);
+      markPath(p, r);
     }
     ctx.fillStyle = KIND[kind]; ctx.globalAlpha = .92; ctx.fill();
 
@@ -290,7 +317,7 @@ function render() {
     ctx.beginPath();
     for (const p of live) {
       if (p.k !== kind || p.O !== null) continue;
-      ctx.moveTo(p.sx + r, p.sy); ctx.arc(p.sx, p.sy, r, 0, 6.284);
+      markPath(p, r);
     }
     ctx.globalAlpha = .42; ctx.fill(); ctx.globalAlpha = 1;
 
@@ -299,7 +326,7 @@ function render() {
       ctx.beginPath();
       for (const p of live) {
         if (p.k !== kind || p.O !== false) continue;
-        ctx.moveTo(p.sx + r, p.sy); ctx.arc(p.sx, p.sy, r, 0, 6.284);
+        markPath(p, r);
       }
       ctx.strokeStyle = KIND[kind]; ctx.lineWidth = Math.min(1.6, r * .5);
       ctx.globalAlpha = .78; ctx.stroke(); ctx.globalAlpha = 1;
@@ -307,40 +334,55 @@ function render() {
       ctx.beginPath();
       for (const p of live) {
         if (p.k !== kind || p.O !== false) continue;
-        ctx.moveTo(p.sx + r, p.sy); ctx.arc(p.sx, p.sy, r, 0, 6.284);
+        markPath(p, r);
       }
       ctx.globalAlpha = .34; ctx.fill(); ctx.globalAlpha = 1;
     }
   }
 
-  // a laurel around the awarded — our own mark, never a competition's
+  // the prizes — one mark per kind of claim, stacked once per placing
   if (r >= 2.4) {
-    const lr = r + 3.2;
-    ctx.strokeStyle = C.crustDeep; ctx.lineWidth = Math.min(1.6, r * .42);
+    const lr = r + 3.2, step = Math.max(1.7, r * .48);
     ctx.lineCap = 'round';
-    ctx.beginPath();
-    const step = Math.max(1.7, r * .48);
-    for (const p of live) {
-      if (!p.aw) continue;
-      const layers = Math.min(p.aw.length, 3);
-      for (let j = 0; j < layers; j++) {
-        const R = lr + j * step;
-        ctx.moveTo(p.sx - R, p.sy - R * .58);
-        ctx.quadraticCurveTo(p.sx - R * 1.42, p.sy, p.sx - R, p.sy + R * .58);
-        ctx.moveTo(p.sx + R, p.sy - R * .58);
-        ctx.quadraticCurveTo(p.sx + R * 1.42, p.sy, p.sx + R, p.sy + R * .58);
+    for (const nat of ['item', 'shop', 'baguette']) {
+      ctx.beginPath();
+      let any = false;
+      for (const p of live) {
+        if (!p.aw || topNature(p) !== nat) continue;
+        any = true;
+        const layers = Math.min(p.aw.length, 3);
+        for (let j = 0; j < layers; j++) {
+          const R = lr + j * step;
+          if (nat === 'shop') {                  // the whole house — a closed ring
+            ctx.moveTo(p.sx + R * 1.1, p.sy); ctx.arc(p.sx, p.sy, R * 1.1, 0, 6.284);
+          } else {                               // laurel brackets
+            ctx.moveTo(p.sx - R, p.sy - R * .58);
+            ctx.quadraticCurveTo(p.sx - R * 1.42, p.sy, p.sx - R, p.sy + R * .58);
+            ctx.moveTo(p.sx + R, p.sy - R * .58);
+            ctx.quadraticCurveTo(p.sx + R * 1.42, p.sy, p.sx + R, p.sy + R * .58);
+          }
+        }
+        if (nat === 'baguette' && r >= 3) {      // the loaf's own bar over the laurel
+          ctx.moveTo(p.sx - lr * .8, p.sy - lr - 2.6);
+          ctx.lineTo(p.sx + lr * .8, p.sy - lr - 2.6);
+        }
       }
+      if (!any) continue;
+      ctx.strokeStyle = NAT_COL[nat]; ctx.lineWidth = Math.min(1.7, r * .44);
+      ctx.globalAlpha = .88; ctx.stroke(); ctx.globalAlpha = 1;
     }
-    ctx.globalAlpha = .85; ctx.stroke(); ctx.globalAlpha = 1;
 
-    // a laureate wears a seed above the laurel
+    // a laureate wears a seed above it all
     if (r >= 3.4) {
       ctx.beginPath();
+      let any = false;
       for (const p of live) {
         if (!p.aw || !p.aw.some(a => a.r === 1)) continue;
-        ctx.moveTo(p.sx + 1.5, p.sy - lr - 2.4); ctx.arc(p.sx, p.sy - lr - 2.4, 1.5, 0, 6.284);
+        any = true;
+        const y = p.sy - lr - (topNature(p) === 'baguette' ? 6.4 : 2.4);
+        ctx.moveTo(p.sx + 1.6, y); ctx.arc(p.sx, y, 1.6, 0, 6.284);
       }
-      ctx.fillStyle = C.crustDeep; ctx.fill();
+      if (any) { ctx.fillStyle = C.crustDeep; ctx.fill(); }
     }
   }
 
@@ -718,7 +760,12 @@ function openPlace(p) {
           <div class="awy">${String(a.y).slice(2)}</div>
           <div class="awn">
             <div class="ser" style="font-size:14px;font-weight:600;line-height:1.2">${esc(compFr(a.c) || compName(a.c))}</div>
-            <div style="font-size:9.5px;color:var(--mute);margin-top:2px">${esc(compName(a.c))}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+              <span style="display:inline-block;width:7px;height:7px;border-radius:4px;
+                background:${NAT_COL[awNature(a.c)]}"></span>
+              <span style="font-size:9.5px;color:${NAT_COL[awNature(a.c)]}">${esc(T('nat_' + awNature(a.c)))}</span>
+              <span style="font-size:9.5px;color:var(--mute)">${esc(compName(a.c))}</span>
+            </div>
           </div>
           <div class="awr">${esc(T('rank_n', a.r))}</div>
         </div>`).join('')}
@@ -1033,20 +1080,19 @@ function paintChips() {
   const F = [['all', T('g_all'), [0, 1, 2, 3]],
              ['bread', T('g_bread'), [0, 1]],
              ['sweet', T('g_sweet'), [2, 3]]];
-  // everything on the row, in sections — nothing hidden a level down
-  let html = '';
-  for (const [v, l, ks] of F) {
-    if (v !== 'all') html += '<div class="chipsep"></div>';
-    html += `<button class="chip ${cur === v ? 'on' : ''}" data-f="${v}"
-      style="display:flex;align-items:center;gap:6px">${kindDots(ks, cur === v)}${esc(l)}</button>`;
-    if (v === 'all') continue;
-    for (const k of ks) {
-      const on = state.kinds[k];
-      html += `<button class="chip sub ${on ? 'on' : ''}" data-k="${k}"
-        style="border-color:${on ? KIND[k] : 'var(--line)'}">${kindDots([k], false)}${esc(TRADE[k](T))}</button>`;
-    }
-  }
-  $('#chips').innerHTML = html;
+  // one layer: the three choices, each naming what it holds rather than offering
+  // to take it apart. Taking it apart lives in the sheet.
+  const picked = cur === null;
+  $('#chips').innerHTML = F.map(([v, l, ks]) => {
+    const on = cur === v;
+    const inside = v === 'all' ? '' : ks.map(k => TRADE[k](T)).join(' · ');
+    return `<button class="chip ${on ? 'on' : ''}" data-f="${v}"
+      style="display:flex;align-items:center;gap:6px">${kindDots(ks, on)}${esc(l)}
+      ${inside ? `<span style="font-size:10px;opacity:${on ? .8 : .62};font-weight:400">${esc(inside)}</span>` : ''}
+    </button>`;
+  }).join('') +
+    (picked ? `<button class="chip on" data-f="custom" style="display:flex;align-items:center;gap:6px">
+      ${kindDots([0, 1, 2, 3].filter(k => state.kinds[k]), true)}${esc(T('g_custom'))}</button>` : '');
   const TICK2 = `<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor"
       stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-7"/></svg>`;
   const R2 = [['onlyOpen', T('f_open')], ['onlyAward', awardChipLabel()],
@@ -1066,23 +1112,16 @@ function paintChips() {
 }
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;
-  if (b.dataset.k !== undefined) {
-    const i = +b.dataset.k;
-    if (errandNow()) {
-      // coming from a whole group: the first trade tapped means only that one
-      state.kinds = [0, 1, 2, 3].map(k => k === i);
-    } else {
-      const next = state.kinds.slice();
-      next[i] = !next[i];
-      if (next.some(Boolean)) state.kinds = next; // never leave an empty map
-    }
-  } else if (b.dataset.f === 'custom') { openFilters(); return; }
+  if (b.dataset.f === 'custom') { openFilters(); return; }
   else setErrand(b.dataset.f);
   paintChips(); paintStrip(); render();
 });
 $('#chips2').addEventListener('click', e => {
   const b = e.target.closest('.tog'); if (!b) return;
   state[b.dataset.t] = !state[b.dataset.t];
+  // the two halves of one axis cannot both be true
+  if (b.dataset.t === 'onlyIndie' && state.onlyIndie) state.onlyChain = false;
+  if (b.dataset.t === 'onlyChain' && state.onlyChain) state.onlyIndie = false;
   if (b.dataset.t === 'onlyOpen') {
     paintChips(); paintStrip(); render();
     if (state.onlyOpen) openNearby(); else closeSheets();
@@ -1090,6 +1129,7 @@ $('#chips2').addEventListener('click', e => {
   }
   if (b.dataset.t === 'onlyAward' && !state.onlyAward) {
     state.awardComps = []; state.onlyWinner = false; state.onlyMulti = false;
+    state.awardNat = null;
   }
   paintChips(); paintStrip(); render();
 });
@@ -1100,6 +1140,7 @@ function awardChipLabel() {
   if (state.awardComps.length > 1) return T('f_award') + ' ' + state.awardComps.length;
   if (state.onlyWinner) return T('f_winner');
   if (state.onlyMulti) return T('f_multi');
+  if (state.awardNat) return T('nat_' + state.awardNat);
   return T('f_award');
 }
 function compShort(id) {
@@ -1177,6 +1218,17 @@ function openFilters() {
       ${condRow('onlyAward', T('f_award'), T('f_award_d'))}
       ${state.onlyAward ? `<div class="fsub" style="margin-top:2px;margin-bottom:10px">
         <div style="font-size:10.5px;color:var(--mute);padding:7px 0 2px">${esc(T('f_award_by'))}</div>
+        <div style="display:flex;gap:6px;margin:2px 0 8px">
+          ${['baguette', 'shop', 'item'].map(nat => {
+            const n = base.filter(q => (q.aw || []).some(a => awNature(a.c) === nat)).length;
+            if (!n) return '';                    // an empty class reads as a broken one
+            const on = state.awardNat === nat;
+            return `<button class="chip sub ${on ? 'on' : ''}" data-an="${nat}"
+              style="border-color:${on ? NAT_COL[nat] : 'var(--line)'}">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:5px;
+                background:${NAT_COL[nat]}"></span>${esc(T('nat_' + nat))} ${n}</button>`;
+          }).join('')}
+        </div>
         <div class="frow" data-m="1" style="padding:8px 0">
           <div class="fbox ${state.onlyMulti ? 'on' : ''}" style="width:19px;height:19px">${state.onlyMulti ? TICK : ''}</div>
           <div style="flex:1 1 auto"><div class="fname" style="font-size:12.5px;font-weight:400">${esc(T('f_multi'))}</div>
@@ -1202,6 +1254,7 @@ function openFilters() {
         }).join('')}
       </div>` : ''}
       ${condRow('onlyIndie', T('f_indie'), T('f_indie_d'))}
+      ${condRow('onlyChain', T('f_chain'), T('f_chain_d'))}
       ${condRow('onlyWish', T('wish'), T('f_wish_d'))}
       ${condRow('onlyUnvisited', T('f_unvisited'), T('f_unvisited_d'))}
     </div>
@@ -1223,7 +1276,11 @@ function openFilters() {
     const ac = ev.target.closest('[data-ac]');
     const w = ev.target.closest('[data-w]');
     const m = ev.target.closest('[data-m]');
-    if (ac) {
+    const an = ev.target.closest('[data-an]');
+    if (an) {
+      state.awardNat = state.awardNat === an.dataset.an ? null : an.dataset.an;
+      state.onlyAward = true;
+    } else if (ac) {
       const id = ac.dataset.ac, i = state.awardComps.indexOf(id);
       if (i >= 0) state.awardComps.splice(i, 1); else state.awardComps.push(id);
       state.onlyAward = true;
@@ -1242,6 +1299,7 @@ function openFilters() {
   $('#fReset').onclick = () => {
     setErrand('all');
     state.awardComps = []; state.onlyWinner = false; state.onlyMulti = false;
+    state.awardNat = null;
     COND.forEach(c => { state[c.id] = false; });
     paintChips(); paintStrip(); render(); openFilters();
   };
