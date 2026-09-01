@@ -37,6 +37,8 @@ const C = {
 
 // one hue per trade — the map should say what a shop is before you read a word
 const KIND = ['#C4832E', '#A65B72', '#6E4A34', '#8E7098'];
+// the same hues, dark enough to read at 11 px on paper
+const KIND_INK = ['#8C5216', '#7E3F53', '#553627', '#6B5177'];
 
 const state = {
   lang: 'ko', paris: null, places: [], comps: {},
@@ -1217,8 +1219,9 @@ const TRADE = [T => T('f_bakery'), T => T('f_pastry'), T => T('f_choc'), T => T(
 
 function tradeChip(k) {
   const on = state.kinds[k];
-  return `<button class="chip sub ${on ? 'on' : ''}" data-k="${k}"
-    style="border-color:${on ? KIND[k] : 'var(--line)'}">${kindDots([k], false)}${esc(TRADE[k](T))}</button>`;
+  return `<button class="trade" data-k="${k}" style="border-color:${KIND[k]};
+    background:${on ? KIND[k] : 'rgba(252,248,238,.9)'};
+    color:${on ? '#FCF8EE' : KIND_INK[k]}">${esc(TRADE[k](T))}</button>`;
 }
 function markChip(id, label, mark) {
   const on = state[id];
@@ -1227,20 +1230,14 @@ function markChip(id, label, mark) {
 }
 
 function paintChips() {
-  const all = state.kinds.every(Boolean);
-  // "everything" needs no icon — there is nothing to tell apart
-  $('#chips').innerHTML =
-    `<button class="chip ${all ? 'on' : ''}" data-f="all">${esc(T('g_all'))}</button>` +
-    `<div class="spacer"></div>` +
-    `<button class="tog lamp ${state.onlyOpen ? 'on' : ''}" data-t="onlyOpen">${MARK.glow}${esc(T('f_open'))}</button>`;
+  // "everything" is where you start, not a button you press
+  $('#lamp').className = state.onlyOpen ? 'on' : '';
+  $('#lamp').innerHTML = MARK.glow + esc(T('f_open'));
   // the groups are labels; the trades belonging to them are the buttons
-  // a loaf and a bonbon say "bread" and "sweets" in a sixth of the width
-  const gicon = m => `<span class="grouplbl" style="color:var(--mute);display:flex;
-    align-items:center" title="${esc(m === 'bread' ? T('g_bread') : T('g_sweet'))}">${MARK[m]}</span>`;
+  // each pair in its own field: the grouping costs no width and needs no word
   $('#chips2').innerHTML =
-    gicon('bread') + tradeChip(0) + tradeChip(1) +
-    `<div class="chipsep"></div>` +
-    gicon('sweet') + tradeChip(2) + tradeChip(3);
+    `<div class="tgroup" title="${esc(T('g_bread'))}">${tradeChip(0)}${tradeChip(1)}</div>` +
+    `<div class="tgroup" title="${esc(T('g_sweet'))}">${tradeChip(2)}${tradeChip(3)}</div>`;
 
   $('#chips3').innerHTML =
     markChip('onlyAward', awardChipLabel(), 'award') +
@@ -1262,9 +1259,13 @@ function onChipRow(e) {
   if (b.dataset.f) setErrand(b.dataset.f);
   else if (b.dataset.k !== undefined) {
     const i = +b.dataset.k;
-    const next = state.kinds.slice();
-    next[i] = !next[i];
-    if (next.some(Boolean)) state.kinds = next;   // never leave an empty map
+    if (state.kinds.every(Boolean)) {
+      state.kinds = [0, 1, 2, 3].map(k => k === i);   // out of "everything": just this
+    } else {
+      const next = state.kinds.slice();
+      next[i] = !next[i];
+      state.kinds = next.some(Boolean) ? next : [true, true, true, true];
+    }
   } else if (b.dataset.t) {
     const id = b.dataset.t;
     state[id] = !state[id];
@@ -1282,8 +1283,12 @@ function onChipRow(e) {
   } else return;
   paintChips(); paintStrip(); render();
 }
-$('#chips').addEventListener('click', onChipRow);
 $('#chips3').addEventListener('click', onChipRow);
+$('#lamp').onclick = () => {
+  state.onlyOpen = !state.onlyOpen;
+  paintChips(); paintStrip(); render();
+  if (state.onlyOpen) openNearby(); else closeSheets();
+};
 $('#chips2').addEventListener('click', onChipRow);
 $('#filterBtn').onclick = openFilters;
 
@@ -2614,7 +2619,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v28';
+const BUILD = 'v31';
 const BOOT_AT = Date.now();
 
 async function boot() {
