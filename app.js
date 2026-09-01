@@ -960,6 +960,16 @@ function openSettings() {
 
     <button class="cta ghost" style="margin-top:18px" id="againIntro">${esc(T('intro_again'))}</button>
 
+    <div class="lbl" style="margin-top:20px">${esc(T('build'))}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:9px">
+      <div class="mono" style="flex:1 1 auto;font-size:11px;color:var(--ink2)">Miette ${BUILD}</div>
+      <button class="act" style="flex:0 0 auto;padding:0 14px" id="hardRefresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${C.ink2}" stroke-width="1.7"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3.2-6.9"/><path d="M21 3v6h-6"/></svg>
+        <span>${esc(T('build_refresh'))}</span></button>
+    </div>
+    <div class="small">${esc(T('build_d'))}</div>
+
     <div class="lbl" style="margin-top:20px">${esc(T('records'))}</div>
     <div class="acts">
       <button class="act" id="doExport">
@@ -1006,6 +1016,20 @@ function openSettings() {
     setLang(b.dataset.l); openSettings();
   };
   $('#againIntro').onclick = () => { closeSheets(); setTimeout(openWelcome, 240); };
+  $('#hardRefresh').onclick = async () => {
+    toast(T('build_working'));
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+      if (window.caches) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+    } catch (e) { /* nothing kept here is worth failing over */ }
+    location.replace(location.pathname + '?r=' + Date.now());
+  };
   $('#doExport').onclick = exportRecords;
   $('#doImport').onclick = () => $('#fileIn').click();
   show('setSheet');
@@ -2495,6 +2519,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
+const BUILD = 'v24';
 const BOOT_AT = Date.now();
 
 async function boot() {
@@ -2613,6 +2638,7 @@ if ('serviceWorker' in navigator) {
         });
       });
       reg.update();
+      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
     }).catch(() => {});
   });
 }

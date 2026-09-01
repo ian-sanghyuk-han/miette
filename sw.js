@@ -1,6 +1,6 @@
 /* Miette — cache everything once, then never need the network again.
    The whole point: it opens in a Paris side street with no signal. */
-const V = 'miette-v23';
+const V = 'miette-v24';
 const SHELL = [
   './', './index.html', './app.js', './i18n.js', './manifest.webmanifest',
   './data/paris.json', './data/places.json', './data/competitions.json', './data/streets.json', './data/awards.json',
