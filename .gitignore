@@ -1,0 +1,7 @@
+# raw open-data snapshots — inputs to scripts/, not shipped
+data/_*.json
+data/pdf/
+design/_mapfrag.json
+design/miette-screens.html
+.DS_Store
+Thumbs.db

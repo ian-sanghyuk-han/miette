@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Miette</title>
+<meta name="description" content="파리 빵집 지도 — 빵자취를 따라서">
+<meta name="theme-color" content="#F7F0DF">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Miette">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F7F0DF; --paperDeep:#EFE4C9; --card:#FCF8EE;
+  --ink:#2A2118; --ink2:#544737; --mute:#6F6250; --line:#E2D6B9;
+  --divider:#F0E7D2; --faint:#CFC0A0;
+  --crust:#C4832E; --crustDeep:#8C5216; --olive:#77794F; --seine:#9DAEAC;
+  --safeB:env(safe-area-inset-bottom,0px);
+  --safeT:env(safe-area-inset-top,0px);
+  --tabH:calc(64px + var(--safeB));
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);
+  font-family:'IBM Plex Sans KR',system-ui,-apple-system,sans-serif;
+  -webkit-text-size-adjust:100%;overscroll-behavior:none}
+.ser{font-family:'Cormorant Garamond',Georgia,serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.lbl{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;letter-spacing:2.2px;
+  color:var(--mute);text-transform:uppercase}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
+
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+
+/* ---------------------------------------------------------------- the map */
+#stage{position:relative;flex:1 1 auto;overflow:hidden;touch-action:none}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block}
+#veil{position:absolute;top:0;left:0;right:0;height:calc(150px + var(--safeT));pointer-events:none;
+  background:linear-gradient(180deg,var(--paper) 0%,rgba(247,240,223,.94) 46%,rgba(247,240,223,0) 100%)}
+
+#head{position:absolute;top:calc(14px + var(--safeT));left:16px;right:16px}
+.headrow{display:flex;align-items:baseline;justify-content:space-between}
+#wordmark{font-size:24px;font-weight:600;letter-spacing:6.5px}
+#tagline{font-style:italic;font-size:13.5px;color:var(--mute);margin-top:1px}
+#langbtn{font-size:10px;letter-spacing:1.4px;color:var(--crustDeep);border:1px solid var(--line);
+  padding:5px 9px;background:rgba(252,248,238,.8)}
+#chips{display:flex;gap:6px;margin-top:12px;overflow-x:auto;scrollbar-width:none;
+  padding-bottom:2px;-webkit-overflow-scrolling:touch}
+#chips::-webkit-scrollbar{display:none}
+.chip{padding:7px 13px;border-radius:15px;border:1px solid var(--line);
+  background:rgba(252,248,238,.86);color:var(--ink2);font-size:11.5px;white-space:nowrap;flex:0 0 auto}
+.chip.on{background:var(--crustDeep);color:var(--card);border-color:var(--crustDeep);font-weight:500}
+
+#tools{position:absolute;right:16px;bottom:14px;display:flex;flex-direction:column;gap:8px}
+.tool{width:44px;height:44px;border:1px solid var(--line);background:var(--card);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(42,33,24,.08)}
+
+#strip{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:0 16px;height:38px;
+  background:var(--card);border-top:1px solid var(--line);font-size:11.5px;color:var(--mute)}
+#strip b{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--ink)}
+.sep{width:1px;height:12px;background:var(--line)}
+
+/* --------------------------------------------------------------- tab bar */
+#tabs{flex:0 0 auto;display:flex;height:var(--tabH);padding-bottom:var(--safeB);
+  background:var(--card);border-top:1px solid var(--line)}
+.tab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:var(--mute);min-height:48px}
+.tab.on{color:var(--crustDeep)}
+.tab.on span{font-weight:600}
+.tab span{font-size:10px;letter-spacing:.6px}
+
+/* --------------------------------------------------------------- sheets */
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);
+  border-top:1px solid var(--line);border-radius:16px 16px 0 0;
+  box-shadow:0 -8px 30px rgba(42,33,24,.16);
+  max-height:88%;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:10px 20px calc(24px + var(--safeB));
+  transform:translateY(102%);transition:transform .26s cubic-bezier(.22,.7,.3,1);
+  visibility:hidden}
+.sheet.open{transform:translateY(0);visibility:visible}
+.grip{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+#scrim{position:fixed;inset:0;z-index:15;background:rgba(42,33,24,.28);opacity:0;
+  transition:opacity .26s;pointer-events:none}
+#scrim.on{opacity:1;pointer-events:auto}
+
+.name{font-family:'Cormorant Garamond',Georgia,serif;font-size:25px;font-weight:600;line-height:1.1}
+.meta{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+.meta div{font-size:11.5px;color:var(--ink2)}
+.dot{width:3px;height:3px;border-radius:2px;background:var(--line)}
+.rule{height:1px;background:var(--line);margin:15px 0 13px}
+.hair{height:1px;background:var(--divider)}
+
+.aw{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--divider)}
+.aw:last-child{border-bottom:none}
+.awy{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mute);width:24px;
+  text-align:center;flex:0 0 auto}
+.awn{flex:1 1 auto;font-size:12.5px;min-width:0}
+.awr{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink2);flex:0 0 auto}
+.first{font-size:12px;font-weight:600;color:var(--crustDeep)}
+
+.acts{display:flex;gap:7px;margin-top:11px}
+.act{flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:6px;height:46px;
+  border:1px solid var(--line);background:var(--paper);font-size:12px;color:var(--ink2);
+  text-decoration:none}
+.note{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--mute);
+  margin-top:7px;text-align:center;line-height:1.5}
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;
+  background:var(--crustDeep);color:var(--card);font-size:14px;font-weight:600;letter-spacing:.5px;
+  width:100%}
+.cta.ghost{background:none;border:1px solid var(--line);color:var(--ink2);font-weight:400}
+
+.seg{display:flex;border:1px solid var(--line);background:var(--card);margin-top:9px}
+.seg button{flex:1 1 0;height:46px;font-size:12.5px;color:var(--ink2);border-left:1px solid var(--line)}
+.seg button:first-child{border-left:none}
+.seg button.on{background:var(--crustDeep);color:var(--card);font-weight:600}
+
+.step{display:flex;gap:10px;align-items:flex-start;margin-top:9px}
+.stepn{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--crustDeep);width:13px;flex:0 0 auto;padding-top:2px}
+.small{font-size:11px;color:var(--mute);line-height:1.55;margin-top:7px}
+.body{font-size:12px;color:var(--ink2);line-height:1.55}
+
+#toast{position:fixed;left:50%;bottom:calc(var(--tabH) + 18px);transform:translate(-50%,14px);
+  z-index:40;background:var(--ink);color:var(--paper);font-size:12.5px;padding:11px 18px;
+  opacity:0;transition:.22s;pointer-events:none;max-width:82%;text-align:center;line-height:1.45}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+#boot{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#boot.gone{display:none}
+#boot .ser{font-size:34px;font-weight:600;letter-spacing:9px}
+#boot p{font-size:12px;color:var(--mute);margin:0}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="stage">
+    <canvas id="map"></canvas>
+    <div id="veil"></div>
+    <div id="head">
+      <div class="headrow">
+        <div class="ser" id="wordmark">MIETTE</div>
+        <button id="langbtn" class="mono">KO</button>
+      </div>
+      <div class="ser" id="tagline">빵자취를 따라서</div>
+      <div id="chips"></div>
+    </div>
+    <div id="tools">
+      <button class="tool" id="zoomAll" aria-label="whole city">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg>
+      </button>
+      <button class="tool" id="locate" aria-label="my position">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.2"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="strip"></div>
+
+  <nav id="tabs"></nav>
+</div>
+
+<div id="scrim"></div>
+<section class="sheet" id="placeSheet"></section>
+<section class="sheet" id="stampSheet"></section>
+<section class="sheet" id="setSheet"></section>
+<div id="toast"></div>
+
+<div id="boot">
+  <div class="ser">MIETTE</div>
+  <p id="bootMsg">파리를 펴는 중</p>
+</div>
+
+<input type="file" id="fileIn" accept="application/json,.json" hidden>
+
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

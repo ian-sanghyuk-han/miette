@@ -1,0 +1,59 @@
+{
+  "v": 1,
+  "note": "Facts only: year, laureate, arrondissement where published. No jury prose, no photos. Bakery linkage is filled in per year as it is verified against a primary source; null means not yet verified.",
+  "sources": [
+    "Ville de Paris / Confederation nationale de la boulangerie-patisserie francaise",
+    "Wikipedia: Concours de la meilleure baguette de Paris (winner table)"
+  ],
+  "competitions": [
+    {
+      "id": "gp-baguette-paris",
+      "name": { "fr": "Grand Prix de la Baguette de Paris", "en": "Paris Best Baguette Grand Prix", "ko": "파리 바게트 그랑프리" },
+      "organiser": "Ville de Paris",
+      "since": 1994,
+      "bread": "baguette",
+      "prize": { "fr": "Fournisseur de l'Élysée pendant un an", "en": "Supplies the Élysée Palace for one year", "ko": "1년간 엘리제궁 납품" },
+      "winners": [
+        { "y": 1994, "who": "René Saint-Ouen", "arr": null, "shop": null },
+        { "y": 1995, "who": "Jean-Noël Julien", "arr": null, "shop": null },
+        { "y": 1996, "who": "Philippe Gosselin", "arr": null, "shop": null },
+        { "y": 1997, "who": "René Saint-Ouen", "arr": null, "shop": null },
+        { "y": 1998, "who": "Antonio Teixeira", "arr": null, "shop": null },
+        { "y": 1999, "who": "Stéphane Pouget", "arr": null, "shop": null },
+        { "y": 2000, "who": "Raoul Maeder", "arr": null, "shop": null },
+        { "y": 2001, "who": "Pierre Demoncy", "arr": null, "shop": null },
+        { "y": 2002, "who": "Raoul Maeder", "arr": null, "shop": null },
+        { "y": 2003, "who": "Laurent Connan", "arr": null, "shop": null },
+        { "y": 2004, "who": "Pierre Thilloux", "arr": null, "shop": null },
+        { "y": 2005, "who": "Eric Sanna", "arr": null, "shop": null },
+        { "y": 2006, "who": "Jean-Pierre Cohier", "arr": null, "shop": null },
+        { "y": 2007, "who": "Arnaud Delmontel", "arr": null, "shop": null },
+        { "y": 2008, "who": "Anis Bouabsa", "arr": null, "shop": null },
+        { "y": 2009, "who": "Franck Tobarel", "arr": null, "shop": null },
+        { "y": 2010, "who": "Djibril Bodian", "arr": null, "shop": null },
+        { "y": 2011, "who": "Pascal Barillon", "arr": null, "shop": null },
+        { "y": 2012, "who": "Sébastien Mauvieux", "arr": 18, "shop": null },
+        { "y": 2013, "who": "Ridha Khadher", "arr": null, "shop": null },
+        { "y": 2014, "who": "Antonio Teixeira", "arr": 14, "shop": null },
+        { "y": 2015, "who": "Djibril Bodian", "arr": null, "shop": null },
+        { "y": 2016, "who": "Michael Reydelet & Florian Charles", "arr": null, "shop": null },
+        { "y": 2017, "who": "Sami Bouattour", "arr": 13, "shop": null },
+        { "y": 2018, "who": "Mahmoud M'seddi", "arr": null, "shop": null },
+        { "y": 2019, "who": "Fabrice Leroy", "arr": null, "shop": null },
+        { "y": 2020, "who": "Taieb Sahal", "arr": 17, "shop": null },
+        { "y": 2021, "who": "Makram Akrout", "arr": 12, "shop": null },
+        { "y": 2022, "who": "Damien Dedun", "arr": 15, "shop": null },
+        { "y": 2023, "who": "Tharshan Selvarajah", "arr": null, "shop": null },
+        { "y": 2024, "who": "Xavier Netry", "arr": 11, "shop": null },
+        { "y": 2025, "who": "Mickaël Reydellet", "arr": 10, "shop": null },
+        { "y": 2026, "who": "Sithamparappillai Jegatheepan", "arr": 14, "shop": "Fournil Didot" }
+      ]
+    }
+  ],
+  "todo": [
+    "Grand Paris / Île-de-France meilleure baguette de tradition — annual",
+    "Meilleur Croissant au Beurre d'Isigny — regional + national final",
+    "Master national du meilleur pain au chocolat",
+    "MOF Boulangerie / Pâtisserie — every four years"
+  ]
+}

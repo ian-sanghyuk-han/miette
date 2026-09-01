@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #8C5216; text-decoration: none; } a:hover { color: #C4832E; }
+    .ser { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .lbl { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 9.5px;
+           letter-spacing: 2.2px; color: #6F6250; text-transform: uppercase; }
+    .row { display: flex; align-items: center; gap: 11px; padding: 11px 0;
+           border-bottom: 1px solid #F0E7D2; }
+    .rk { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px;
+          width: 20px; text-align: center; color: #6F6250; }
+    .nm { flex: 1 1 auto; min-width: 0; font-size: 13px; overflow: hidden;
+          text-overflow: ellipsis; white-space: nowrap; }
+    .ar { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; color: #6F6250; width: 24px; }
+    .pr { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #544737; width: 42px; text-align: right; }
+  </style>
+</helmet>
+
+<div style="font-family: 'IBM Plex Sans KR', system-ui, sans-serif; width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #F7F0DF; color: #2A2118;">
+
+  <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 76px; overflow: hidden; padding: 24px 20px 0;">
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between;">
+      <div class="ser" style="font-size: 22px; font-weight: 600; letter-spacing: 1px;">순위</div>
+      <div class="mono" style="font-size: 10.5px; color: #6F6250;">전부 내가 매긴 것</div>
+    </div>
+
+    <div style="display: flex; gap: 6px; margin-top: 14px; overflow: hidden;">
+      <div style="padding: 6px 13px; border-radius: 14px; background: #8C5216; color: #FCF8EE; font-size: 11.5px; font-weight: 500; white-space: nowrap;">바게트</div>
+      <div style="padding: 6px 13px; border-radius: 14px; border: 1px solid #E2D6B9; background: #FCF8EE; color: #544737; font-size: 11.5px; white-space: nowrap;">크루아상</div>
+      <div style="padding: 6px 13px; border-radius: 14px; border: 1px solid #E2D6B9; background: #FCF8EE; color: #544737; font-size: 11.5px; white-space: nowrap;">플랑</div>
+      <div style="padding: 6px 13px; border-radius: 14px; border: 1px solid #E2D6B9; background: #FCF8EE; color: #544737; font-size: 11.5px; white-space: nowrap;">갈레트</div>
+      <div style="padding: 6px 13px; border-radius: 14px; border: 1px solid #E2D6B9; background: #FCF8EE; color: #544737; font-size: 11.5px; white-space: nowrap;">가게</div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; margin-top: 16px;">
+      <div class="mono" style="font-size: 10.5px; color: #6F6250;">9곳 · 12판 붙임</div>
+      <div style="flex: 1 1 auto; height: 1px; background: #E2D6B9;"></div>
+      <div class="mono" style="font-size: 10.5px; color: #6F6250;">€ 평균 1.34</div>
+    </div>
+
+    <div style="margin-top: 6px;">
+
+      <div class="row" style="padding: 13px 0;">
+        <svg width="20" height="20" viewBox="0 0 20 20" style="flex-shrink: 0;">
+          <circle cx="10" cy="10" r="9" fill="#C4832E"/>
+          <text x="10" y="13.4" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" font-weight="500" fill="#FCF8EE">1</text></svg>
+        <div class="nm" style="font-size: 14px; font-weight: 600;">Le Moulin de la Croix Nivert</div>
+        <div class="ar">15e</div>
+        <div class="pr" style="color: #8C5216; font-weight: 500;">€1.20</div>
+        <svg width="26" height="8" viewBox="0 0 26 8"><circle cx="4" cy="4" r="3" fill="#8C5216"/><circle cx="13" cy="4" r="3" fill="#8C5216"/><circle cx="22" cy="4" r="3" fill="#8C5216"/></svg>
+      </div>
+
+      <div class="row"><div class="rk">2</div>
+        <div class="nm">Borissou</div><div class="ar">15e</div><div class="pr">€1.40</div>
+        <svg width="26" height="8" viewBox="0 0 26 8"><circle cx="4" cy="4" r="3" fill="#8C5216"/><circle cx="13" cy="4" r="3" fill="#8C5216"/><circle cx="22" cy="4" r="3" fill="#8C5216"/></svg></div>
+
+      <div class="row"><div class="rk">3</div>
+        <div class="nm">La Fabrique aux gourmandises</div><div class="ar">14e</div><div class="pr">€1.30</div>
+        <svg width="26" height="8" viewBox="0 0 26 8"><circle cx="4" cy="4" r="3" fill="#8C5216"/><circle cx="13" cy="4" r="3" fill="#8C5216"/><circle cx="22" cy="4" r="3" fill="none" stroke="#CFC0A0" stroke-width="1"/></svg></div>
+
+      <div class="row"><div class="rk">4</div>
+        <div class="nm">Alexine</div><div class="ar">10e</div><div class="pr">€1.30</div>
+        <svg width="26" height="8" viewBox="0 0 26 8"><circle cx="4" cy="4" r="3" fill="#8C5216"/><circle cx="13" cy="4" r="3" fill="#8C5216"/><circle cx="22" cy="4" r="3" fill="none" stroke="#CFC0A0" stroke-width="1"/></svg></div>
+
+      <div class="row"><div class="rk">5</div>
+        <div class="nm">Carton</div><div class="ar">10e</div><div class="pr">€1.50</div>
+        <svg width="26" height="8" viewBox="0 0 26 8"><circle cx="4" cy="4" r="3" fill="#8C5216"/><circle cx="13" cy="4" r="3" fill="none" stroke="#CFC0A0" stroke-width="1"/><circle cx="22" cy="4" r="3" fill="none" stroke="#CFC0A0" stroke-width="1"/></svg></div>
+
+      <div class="row"><div class="rk">6</div>
+        <div class="nm">La Parisienne</div><div class="ar">10e</div><div class="pr">€1.40</div>
+        <svg width="26" height="8" viewBox="0 0 26 8"><circle cx="4" cy="4" r="3" fill="#8C5216"/><circle cx="13" cy="4" r="3" fill="none" stroke="#CFC0A0" stroke-width="1"/><circle cx="22" cy="4" r="3" fill="none" stroke="#CFC0A0" stroke-width="1"/></svg></div>
+
+      <div class="row" style="border-bottom: none;"><div class="rk">7</div>
+        <div class="nm">Boulangerie Moderne</div><div class="ar">5e</div><div class="pr">€1.25</div>
+        <svg width="26" height="8" viewBox="0 0 26 8"><circle cx="4" cy="4" r="3" fill="#8C5216"/><circle cx="13" cy="4" r="3" fill="none" stroke="#CFC0A0" stroke-width="1"/><circle cx="22" cy="4" r="3" fill="none" stroke="#CFC0A0" stroke-width="1"/></svg></div>
+    </div>
+
+    <div style="margin-top: 10px; border-top: 1px dashed #CFC0A0; padding-top: 12px;">
+      <div class="lbl">아직 판단 중 — 두 곳</div>
+      <div style="display: flex; align-items: center; gap: 11px; padding: 9px 0 0;">
+        <div class="rk" style="color: #CFC0A0;">·</div>
+        <div class="nm" style="color: #6F6250;">Bergeron</div>
+        <div class="ar">7e</div><div class="pr" style="color: #6F6250;">€1.45</div>
+        <div class="mono" style="font-size: 9.5px; color: #6F6250; width: 34px; text-align: right;">1판</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 11px; padding: 7px 0 0;">
+        <div class="rk" style="color: #CFC0A0;">·</div>
+        <div class="nm" style="color: #6F6250;">Thevenin</div>
+        <div class="ar">6e</div><div class="pr" style="color: #6F6250;">€1.35</div>
+        <div class="mono" style="font-size: 9.5px; color: #6F6250; width: 34px; text-align: right;">0판</div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 8px; margin-top: 16px;">
+      <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 8px; height: 48px; background: #8C5216; color: #FCF8EE;">
+        <span style="font-size: 13px; font-weight: 600;">한 판 더 붙이기</span>
+      </div>
+      <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 7px; height: 48px; border: 1px solid #E2D6B9; background: #FCF8EE; color: #544737;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.5" stroke-linecap="round"><path d="M3 21V3M3 21h18"/><circle cx="9" cy="8" r="1.6"/><circle cx="15" cy="14" r="1.6"/><circle cx="18" cy="6" r="1.6"/></svg>
+        <span style="font-size: 13px;">가성비로 보기</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 76px; display: flex; align-items: stretch; background: #FCF8EE; border-top: 1px solid #E2D6B9; padding-bottom: 8px;">
+    <div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z M9 4v14 M15 6v14"/></svg>
+      <div style="font-size: 10px; letter-spacing: 0.6px; color: #6F6250;">지도</div></div>
+    <div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z M16 3v4h3 M8 11h8 M8 15h6"/></svg>
+      <div style="font-size: 10px; letter-spacing: 0.6px; color: #6F6250;">기록</div></div>
+    <div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8C5216" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9 M10 20V4 M16 20V13 M2 20h20"/></svg>
+      <div style="font-size: 10px; letter-spacing: 0.6px; color: #8C5216; font-weight: 600;">순위</div></div>
+    <div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c4 0 3-6 7-6s3-6 7-6 M5 19h.01 M19 7h.01"/></svg>
+      <div style="font-size: 10px; letter-spacing: 0.6px; color: #6F6250;">여정</div></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

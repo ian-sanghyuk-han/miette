@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #8C5216; text-decoration: none; } a:hover { color: #C4832E; }
+    .ser { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .lbl { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 9.5px;
+           letter-spacing: 2.2px; color: #6F6250; text-transform: uppercase; }
+  </style>
+</helmet>
+
+<div style="font-family: 'IBM Plex Sans KR', system-ui, sans-serif; width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #F7F0DF; color: #2A2118; padding: 24px 20px 0;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.6" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    <div class="lbl">도장</div>
+    <div style="width: 18px;"></div>
+  </div>
+
+  <div style="text-align: center; margin-top: 26px;">
+    <div class="ser" style="font-size: 22px; font-weight: 600; line-height: 1.15;">La Fabrique aux gourmandises</div>
+    <div class="mono" style="font-size: 10.5px; color: #6F6250; margin-top: 6px; letter-spacing: 0.6px;">PARIS 14e · 2026.09.01 · 07:12</div>
+  </div>
+
+  <div style="display: flex; align-items: center; justify-content: center; margin-top: 26px; height: 250px;">
+    <svg width="250" height="250" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="96" fill="none" stroke="#C4832E" stroke-width="0.8" opacity="0.22"/>
+      <circle cx="100" cy="100" r="88" fill="none" stroke="#C4832E" stroke-width="0.8" opacity="0.13"/>
+      <g transform="rotate(-6 100 100)" opacity="0.9">
+        <circle cx="100" cy="100" r="78" fill="none" stroke="#C4832E" stroke-width="3.6"/>
+        <circle cx="100" cy="100" r="68" fill="none" stroke="#C4832E" stroke-width="1"/>
+        <defs>
+          <path id="arcTop" d="M 100 100 m -55 0 a 55 55 0 1 1 110 0" fill="none"/>
+          <path id="arcBot" d="M 100 100 m -52 0 a 52 52 0 1 0 104 0" fill="none"/>
+        </defs>
+        <text font-family="'Cormorant Garamond', Georgia, serif" font-size="20" font-weight="600" letter-spacing="7" fill="#C4832E">
+          <textPath href="#arcTop" startOffset="50%" text-anchor="middle">MIETTE</textPath>
+        </text>
+        <text font-family="'IBM Plex Mono', monospace" font-size="9.5" letter-spacing="2.6" fill="#C4832E">
+          <textPath href="#arcBot" startOffset="50%" text-anchor="middle">PARIS 14e</textPath>
+        </text>
+        <g stroke="#C4832E" stroke-width="4.4" stroke-linecap="round">
+          <path d="M78 112 L92 84"/>
+          <path d="M93 116 L107 88"/>
+          <path d="M108 112 L122 84"/>
+        </g>
+        <path d="M62 118 H138" stroke="#C4832E" stroke-width="1" opacity="0.6"/>
+        <text x="100" y="132" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9" letter-spacing="1.6" fill="#C4832E">01.09.26</text>
+      </g>
+    </svg>
+  </div>
+
+  <div style="text-align: center; margin-top: -6px;">
+    <div style="font-size: 14px; font-weight: 600;">첫 번째 도장입니다</div>
+    <div class="ser" style="font-style: italic; font-size: 13.5px; color: #544737; margin-top: 5px;">동화에서는 새가 먹어 버렸다. 여기서는 남는다.</div>
+  </div>
+
+  <div style="height: 1px; background: #E2D6B9; margin: 22px 0 16px;"></div>
+
+  <div style="display: flex; align-items: center; gap: 16px;">
+    <svg width="112" height="72" viewBox="0 0 112 72" style="flex-shrink: 0;">
+      <g transform="translate(30 36)">
+        <g transform="rotate(-14)" opacity="0.30">
+          <circle r="25" fill="none" stroke="#C4832E" stroke-width="2.4"/>
+          <circle r="20" fill="none" stroke="#C4832E" stroke-width="0.7"/>
+          <g stroke="#C4832E" stroke-width="2.6" stroke-linecap="round"><path d="M-11 6 L-5 -6"/><path d="M-2 8 L4 -4"/><path d="M7 6 L13 -6"/></g>
+        </g>
+      </g>
+      <g transform="translate(46 36)">
+        <g transform="rotate(9)" opacity="0.52">
+          <circle r="25" fill="none" stroke="#C4832E" stroke-width="2.4"/>
+          <circle r="20" fill="none" stroke="#C4832E" stroke-width="0.7"/>
+          <g stroke="#C4832E" stroke-width="2.6" stroke-linecap="round"><path d="M-11 6 L-5 -6"/><path d="M-2 8 L4 -4"/><path d="M7 6 L13 -6"/></g>
+        </g>
+      </g>
+      <g transform="translate(62 36)">
+        <g transform="rotate(-3)" opacity="0.92">
+          <circle r="25" fill="none" stroke="#8C5216" stroke-width="2.6"/>
+          <circle r="20" fill="none" stroke="#8C5216" stroke-width="0.8"/>
+          <g stroke="#8C5216" stroke-width="2.8" stroke-linecap="round"><path d="M-11 6 L-5 -6"/><path d="M-2 8 L4 -4"/><path d="M7 6 L13 -6"/></g>
+        </g>
+      </g>
+    </svg>
+    <div>
+      <div style="font-size: 12.5px; font-weight: 600;">또 가면 겹쳐 찍힙니다</div>
+      <div style="font-size: 11.5px; color: #544737; line-height: 1.55; margin-top: 4px;">
+        같은 자리에 조금씩 어긋나게 쌓여 진해집니다.<br>단골집은 지도에서 색만 봐도 압니다.</div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 20px; right: 20px; bottom: 30px; display: flex; gap: 9px;">
+    <div style="flex: 0 0 auto; display: flex; align-items: center; justify-content: center; height: 52px; padding: 0 20px; border: 1px solid #E2D6B9; background: #FCF8EE; font-size: 13px; color: #544737;">나중에</div>
+    <div style="flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 9px; height: 52px; background: #8C5216; color: #FCF8EE;">
+      <span style="font-size: 14px; font-weight: 600;">무엇을 드셨나요</span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FCF8EE" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

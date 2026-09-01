@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #8C5216; text-decoration: none; } a:hover { color: #C4832E; }
+    .ser { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .lbl { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 9.5px;
+           letter-spacing: 2.2px; color: #6F6250; text-transform: uppercase; }
+    .card { border: 1px solid #E2D6B9; background: #FCF8EE; padding: 16px 18px 15px;
+            display: flex; flex-direction: column; gap: 0; position: relative; }
+  </style>
+</helmet>
+
+<div style="font-family: 'IBM Plex Sans KR', system-ui, sans-serif; width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #F7F0DF; color: #2A2118; padding: 24px 20px 0;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.6" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    <div class="lbl">바게트 리그</div>
+    <div class="mono" style="font-size: 10.5px; color: #6F6250;">12판째</div>
+  </div>
+
+  <div style="text-align: center; margin-top: 20px;">
+    <div class="ser" style="font-size: 27px; font-weight: 600; letter-spacing: -0.2px;">어느 쪽이 나았나요</div>
+    <div style="font-size: 11.5px; color: #6F6250; margin-top: 5px;">점수를 매기지 말고, 둘 중 하나만 고르세요</div>
+  </div>
+
+  <div class="card" style="margin-top: 22px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div class="mono" style="font-size: 9.5px; letter-spacing: 2px; color: #8C5216;">오늘 아침</div>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C4832E" stroke-width="1.4" stroke-linecap="round">
+        <g transform="rotate(-38 12 12)"><ellipse cx="12" cy="12" rx="3.5" ry="9.2"/><path d="M9.8 7.6l4.4-1.4M9.6 11.8l4.6-1.4M9.8 16l4.4-1.4"/></g></svg>
+    </div>
+    <div class="ser" style="font-size: 24px; font-weight: 600; line-height: 1.12; margin-top: 8px;">La Fabrique aux gourmandises</div>
+    <div style="display: flex; align-items: center; gap: 9px; margin-top: 9px;">
+      <div class="mono" style="font-size: 10.5px; color: #6F6250;">14e</div>
+      <div style="width: 3px; height: 3px; border-radius: 2px; background: #E2D6B9;"></div>
+      <div class="mono" style="font-size: 15px; font-weight: 500; color: #8C5216;">€1.30</div>
+      <div style="flex: 1 1 auto;"></div>
+      <div class="mono" style="font-size: 9.5px; color: #6F6250;">현재 3위</div>
+    </div>
+    <div style="font-size: 11.5px; color: #544737; line-height: 1.5; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F0E7D2;">
+      껍질은 유리처럼 부서지는데 속은 조금 촉촉했다.</div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 12px; margin: 14px 0;">
+    <div style="flex: 1 1 auto; height: 1px; background: #E2D6B9;"></div>
+    <div class="ser" style="font-size: 20px; font-weight: 700; letter-spacing: 3px; color: #6F6250;">VS</div>
+    <div style="flex: 1 1 auto; height: 1px; background: #E2D6B9;"></div>
+  </div>
+
+  <div class="card">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div class="mono" style="font-size: 9.5px; letter-spacing: 2px; color: #6F6250;">8월 24일</div>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.4" stroke-linecap="round">
+        <g transform="rotate(-38 12 12)"><ellipse cx="12" cy="12" rx="3.5" ry="9.2"/><path d="M9.8 7.6l4.4-1.4M9.6 11.8l4.6-1.4M9.8 16l4.4-1.4"/></g></svg>
+    </div>
+    <div class="ser" style="font-size: 24px; font-weight: 600; line-height: 1.12; margin-top: 8px;">Le Moulin de la Croix Nivert</div>
+    <div style="display: flex; align-items: center; gap: 9px; margin-top: 9px;">
+      <div class="mono" style="font-size: 10.5px; color: #6F6250;">15e</div>
+      <div style="width: 3px; height: 3px; border-radius: 2px; background: #E2D6B9;"></div>
+      <div class="mono" style="font-size: 15px; font-weight: 500; color: #8C5216;">€1.20</div>
+      <div style="flex: 1 1 auto;"></div>
+      <div class="mono" style="font-size: 9.5px; color: #6F6250;">현재 1위</div>
+    </div>
+    <div style="font-size: 11.5px; color: #544737; line-height: 1.5; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F0E7D2;">
+      크루아상 3위 · 플랑 3위인 집. 바게트는 처음.</div>
+  </div>
+
+  <div style="display: flex; gap: 8px; margin-top: 18px;">
+    <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; height: 48px; border: 1px solid #E2D6B9; background: #FCF8EE; font-size: 13px; color: #544737;">비겼다</div>
+    <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; height: 48px; border: 1px solid #E2D6B9; background: #FCF8EE; font-size: 13px; color: #6F6250;">건너뛰기</div>
+  </div>
+
+  <div style="position: absolute; left: 20px; right: 20px; bottom: 30px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between;">
+      <div class="lbl">바게트 순위가 굳어지는 중</div>
+      <div class="mono" style="font-size: 10px; color: #544737;">9곳 중 6곳 확실</div>
+    </div>
+    <div style="height: 5px; background: #E9DCC2; margin-top: 8px;">
+      <div style="width: 66%; height: 5px; background: #C4832E;"></div>
+    </div>
+    <div style="font-size: 10.5px; color: #6F6250; line-height: 1.55; margin-top: 9px;">
+      한 판이 여러 자리를 정합니다 — A가 B를 이기고 B가 C를 이겼다면 A와 C는 붙이지 않아도 됩니다.</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #8C5216; text-decoration: none; } a:hover { color: #C4832E; }
+    .ser { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .lbl { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 9.5px;
+           letter-spacing: 2.2px; color: #6F6250; text-transform: uppercase; }
+    .cell { display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 4px; height: 62px; border: 1px solid #E2D6B9; background: #FCF8EE; }
+    .on { border-color: #C4832E; background: rgba(196,131,46,0.10); }
+    .fr { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 11px;
+          font-weight: 600; color: #544737; line-height: 1; }
+    .on .fr { color: #8C5216; }
+  </style>
+</helmet>
+
+<div style="font-family: 'IBM Plex Sans KR', system-ui, sans-serif; width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #F7F0DF; color: #2A2118; padding: 24px 20px 0;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.6" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <div class="lbl">오늘의 기록</div>
+    <div class="mono" style="font-size: 11px; color: #8C5216; font-weight: 500;">저장</div>
+  </div>
+
+  <div style="margin-top: 14px;">
+    <div class="ser" style="font-size: 19px; font-weight: 600; line-height: 1.15;">La Fabrique aux gourmandises</div>
+    <div class="mono" style="font-size: 10px; color: #6F6250; margin-top: 4px;">14e · 2026.09.01 07:12</div>
+  </div>
+
+  <div class="lbl" style="margin-top: 18px;">무엇을 드셨나요</div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 9px;">
+
+    <div class="cell on">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8C5216" stroke-width="1.4" stroke-linecap="round">
+        <g transform="rotate(-38 12 12)"><ellipse cx="12" cy="12" rx="3.5" ry="9.2"/><path d="M9.8 7.6l4.4-1.4M9.6 11.8l4.6-1.4M9.8 16l4.4-1.4"/></g></svg>
+      <div class="fr">baguette</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.6 15.8c0-5.5 3.8-9.4 8.4-9.4s8.4 3.9 8.4 9.4c-1.8-2.5-4.6-3.9-8.4-3.9s-6.6 1.4-8.4 3.9z"/>
+        <path d="M3.6 15.8c-.9-.2-1.2-1.4-.5-2.1M20.4 15.8c.9-.2 1.2-1.4.5-2.1"/></svg>
+      <div class="fr">croissant</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.4" stroke-linecap="round">
+        <rect x="3.5" y="7.5" width="17" height="9" rx="2.2"/><path d="M8.4 7.5v9M15.6 7.5v9"/></svg>
+      <div class="fr">pain choc.</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 10.5h16V15a3.2 3.2 0 01-3.2 3.2H7.2A3.2 3.2 0 014 15z"/>
+        <path d="M4 10.5c0-2.2 3.6-4 8-4s8 1.8 8 4"/></svg>
+      <div class="fr">flan</div>
+    </div>
+
+    <div class="cell on">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8C5216" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="8.2"/>
+        <path d="M12 3.8c2.6 2.8 2.6 5.6 0 8.2M12 20.2c-2.6-2.8-2.6-5.6 0-8.2"/>
+        <path d="M3.8 12c2.8-2.6 5.6-2.6 8.2 0M20.2 12c-2.8 2.6-5.6 2.6-8.2 0"/></svg>
+      <div class="fr">galette</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.4" stroke-linecap="round">
+        <rect x="2.6" y="9" width="18.8" height="6" rx="3"/><path d="M5.4 10.8h13.2"/></svg>
+      <div class="fr">éclair</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.8 17.2a8.2 8.2 0 0116.4 0z"/>
+        <path d="M3.8 17.2q2-1.5 4.1 0t4.1 0 4.1 0 4.1 0"/><path d="M9 12.2l2.6-2.4M13 13l2.6-2.4"/></svg>
+      <div class="fr">chausson</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.4" stroke-linecap="round">
+        <circle cx="12" cy="12" r="8.2"/><path d="M8.4 8.4l7.2 7.2M15.6 8.4l-7.2 7.2"/></svg>
+      <div class="fr">campagne</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="8.2"/><path d="M12 3.8V12l6.6 4.8"/></svg>
+      <div class="fr">tarte citron</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="8.2"/><path d="M6.6 6.6l4.4 4.4M17.4 6.6L13 11M17.4 17.4L13 13M6.6 17.4L11 13"/></svg>
+      <div class="fr">kouign-a.</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.4" stroke-linecap="round">
+        <circle cx="12" cy="12" r="8.2"/><path d="M12 12a3.2 3.2 0 113.2-3.2c0 3-3.2 3.7-3.2 7"/></svg>
+      <div class="fr">pain raisins</div>
+    </div>
+
+    <div class="cell">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.4" stroke-linecap="round">
+        <path d="M12 6.5v11M6.5 12h11"/></svg>
+      <div class="fr" style="color: #6F6250;">그 외</div>
+    </div>
+  </div>
+
+  <div class="lbl" style="margin-top: 20px;">담은 것 — 두 가지</div>
+
+  <div style="display: flex; flex-direction: column; gap: 7px; margin-top: 9px;">
+
+    <div style="border: 1px solid #E2D6B9; background: #FCF8EE; padding: 11px 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="ser" style="flex: 1 1 auto; font-size: 15px; font-weight: 600;">baguette tradition</div>
+        <div class="mono" style="font-size: 14px; font-weight: 500; color: #8C5216;">€1.30</div>
+        <div style="display: flex; align-items: center; border: 1px solid #E2D6B9;">
+          <div style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+            <svg width="11" height="11" viewBox="0 0 12 12" stroke="#544737" stroke-width="1.5" stroke-linecap="round"><path d="M2 6h8"/></svg></div>
+          <div class="mono" style="width: 22px; text-align: center; font-size: 12px;">1</div>
+          <div style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+            <svg width="11" height="11" viewBox="0 0 12 12" stroke="#544737" stroke-width="1.5" stroke-linecap="round"><path d="M6 2v8M2 6h8"/></svg></div>
+        </div>
+      </div>
+      <div style="font-size: 11.5px; color: #544737; line-height: 1.5; margin-top: 7px; padding-top: 7px; border-top: 1px solid #F0E7D2;">
+        껍질은 유리처럼 부서지는데 속은 조금 촉촉했다. 7시 반에 나온 것.</div>
+    </div>
+
+    <div style="border: 1px solid #E2D6B9; background: #FCF8EE; padding: 11px 12px; display: flex; align-items: center; gap: 10px;">
+      <div class="ser" style="flex: 1 1 auto; font-size: 15px; font-weight: 600;">galette des rois</div>
+      <div class="mono" style="font-size: 14px; font-weight: 500; color: #8C5216;">€4.80</div>
+      <div class="mono" style="font-size: 10px; color: #6F6250;">메모 없음</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 7px; margin-top: 12px;">
+    <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 7px; height: 46px; border: 1px dashed #CFC0A0; color: #6F6250;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 18a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2h3l2-3h6l2 3h3a2 2 0 012 2z"/><circle cx="12" cy="13" r="3.6"/></svg>
+      <span style="font-size: 12px;">사진 한 장</span>
+    </div>
+    <div class="mono" style="flex: 0 0 auto; display: flex; align-items: center; padding: 0 14px; height: 46px; border: 1px solid #E2D6B9; background: #FCF8EE; font-size: 12px; color: #544737;">합계 €6.10</div>
+  </div>
+
+  <div class="lbl" style="margin-top: 20px;">다시 올 만한가</div>
+  <div style="display: flex; gap: 7px; margin-top: 9px;">
+    <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; height: 50px; background: #8C5216; color: #FCF8EE; font-size: 13px; font-weight: 600;">또 온다</div>
+    <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; height: 50px; border: 1px solid #E2D6B9; background: #FCF8EE; font-size: 13px; color: #544737;">괜찮다</div>
+    <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; height: 50px; border: 1px solid #E2D6B9; background: #FCF8EE; font-size: 13px; color: #544737;">한 번이면 됐다</div>
+  </div>
+
+  <div class="mono" style="font-size: 9.5px; color: #6F6250; text-align: center; margin-top: 12px;">별점은 없습니다 — 순위는 VS에서 만들어집니다</div>
+</div>
+</x-dc>
+</body>
+</html>

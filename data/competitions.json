@@ -1,0 +1,283 @@
+{
+  "v": 1,
+  "note": "Descriptions are written by us from published facts (organiser, year, rules, entry counts, prizes). No jury commentary or guide prose is reproduced.",
+  "sources": [
+    "Ville de Paris / Confederation nationale de la boulangerie-patisserie francaise",
+    "Syndicat des Boulangers du Grand Paris — boulangersdugrandparis.com",
+    "Ministere du Travail — Un des Meilleurs Ouvriers de France"
+  ],
+  "competitions": [
+    {
+      "id": "gp-baguette-paris",
+      "bread": "baguette",
+      "area": "paris",
+      "since": 1994,
+      "cadence": "annual",
+      "editions": 33,
+      "organiser": "Ville de Paris + Confédération nationale de la boulangerie-pâtisserie française",
+      "name": {
+        "fr": "Grand Prix de la Baguette de Tradition Française de la Ville de Paris",
+        "en": "Paris Grand Prix for the Traditional Baguette",
+        "ko": "파리시 전통 바게트 그랑프리"
+      },
+      "what": {
+        "fr": "Le concours de baguette le plus ancien et le plus connu de Paris. Le vainqueur fournit l'Élysée en pain pendant un an et reçoit 4 000 €.",
+        "en": "The oldest and best-known baguette contest in Paris. The winner supplies the Élysée Palace with bread for a year and takes home €4,000.",
+        "ko": "파리에서 가장 오래되고 가장 알려진 바게트 대회. 우승자는 1년간 엘리제궁(대통령궁)에 빵을 납품하고 상금 4,000유로를 받는다."
+      },
+      "how": {
+        "fr": "Chaque baguette doit mesurer 55–65 cm, peser 250–300 g et contenir 18 g de sel par kilo de farine. Les baguettes hors normes sont écartées d'emblée. Les autres sont numérotées — le jury ne sait pas qui a fait quoi — et notées de 0 à 4 sur la cuisson, la mie, le goût, l'odeur et l'aspect. Le jury réunit des professionnels, des journalistes spécialisés et six Parisiens tirés au sort.",
+        "en": "Every baguette must be 55–65 cm long, weigh 250–300 g and carry 18 g of salt per kilo of flour. Anything outside those limits is thrown out on the spot. The rest are numbered — the jury never learns whose is whose — and scored 0 to 4 on bake, crumb, taste, smell and looks. The jury is made of trade professionals, specialist journalists and six Parisians drawn at random.",
+        "ko": "바게트는 길이 55~65cm, 무게 250~300g, 밀가루 1kg당 소금 18g이어야 한다. 규격을 벗어나면 그 자리에서 탈락. 나머지는 번호만 붙여 — 심사위원은 누가 만든 건지 모른다 — 굽기·속살·맛·향·모양을 0~4점으로 매긴다. 심사위원은 업계 전문가, 전문 기자, 그리고 **추첨으로 뽑은 파리 시민 여섯 명**으로 구성된다."
+      },
+      "latest": { "year": 2026, "entries": 144, "who": "Sithamparappillai Jegatheepan", "shop": "Fournil Didot", "arr": 14 }
+    },
+    {
+      "id": "patisserie",
+      "bread": "éclair au chocolat + tarte au citron",
+      "area": "grand-paris",
+      "cadence": "annual",
+      "editions": 17,
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Trophée de la meilleure pâtisserie du Grand Paris",
+        "en": "Greater Paris Best Pastry Trophy",
+        "ko": "그랑파리 최고 파티스리 트로피"
+      },
+      "what": {
+        "fr": "Deux classiques, pas de fantaisie : un éclair au chocolat et une tarte au citron sans meringue. Les deux pâtisseries que tout le monde connaît, donc les deux où l'on ne peut rien cacher.",
+        "en": "Two classics, no invention allowed: a chocolate éclair and a lemon tart with no meringue. The two pastries everyone knows — which is exactly why nothing can be hidden in them.",
+        "ko": "정해진 두 가지만 만든다. 쇼콜라 에클레르와 머랭 없는 레몬 타르트. 누구나 아는 두 가지라, 숨길 데가 없는 두 가지이기도 하다."
+      },
+      "how": {
+        "fr": "En 2026, 86 inscriptions dont 5 apprentis ; 74 candidats ont déposé leurs deux créations le jour même. Classement complet publié, chefs et apprentis séparés.",
+        "en": "In 2026, 86 entries including 5 apprentices; 74 turned up on the day with both pastries. The full ranking is published, chefs and apprentices listed separately.",
+        "ko": "2026년 86명 접수(견습생 5명 포함), 당일 74명이 두 가지를 모두 제출했다. 순위표 전체가 공개되고 사장부와 견습생부가 따로 매겨진다."
+      },
+      "latest": { "year": 2026, "entries": 74, "who": "Philippe Arsac", "shop": "Boulangerie Lorette", "arr": 13 }
+    },
+    {
+      "id": "galette",
+      "bread": "galette des rois",
+      "area": "grand-paris",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Meilleure galette aux amandes du Grand Paris",
+        "en": "Greater Paris Best Almond Galette",
+        "ko": "그랑파리 최고 아몬드 갈레트"
+      },
+      "what": {
+        "fr": "La galette des Rois de l'Épiphanie — le gâteau de janvier, celui qui cache une fève. Le concours se tient début décembre, juste avant la saison.",
+        "en": "The Twelfth Night galette — January's cake, the one with a charm hidden inside. Judged in early December, right before the season starts.",
+        "ko": "주현절에 먹는 '왕들의 갈레트' — 안에 도자기 인형(fève)을 숨겨 굽는 1월의 케이크. 심사는 시즌 직전인 12월 초에 열린다."
+      },
+      "how": {
+        "fr": "196 inscriptions, 165 galettes jugées par plus de cent jurés. Notées sur la cuisson, le décor, la composition aux amandes (frangipane ou crème d'amandes), le feuilletage et la tenue à la coupe.",
+        "en": "196 entries, 165 galettes judged by over a hundred jurors. Scored on bake, decoration, the almond filling (frangipane or almond cream), the lamination, and whether it holds its shape when cut.",
+        "ko": "196명 접수, 165개를 100명 넘는 심사위원이 평가. 굽기 · 윗면 무늬 · 아몬드 충전물(프랑지판 또는 아몬드 크림) · 결(푀유타주) · 잘랐을 때 무너지지 않는가로 채점한다."
+      },
+      "latest": { "year": 2026, "entries": 165, "who": "Patrick Dumont", "shop": "Maison Dumont", "town": "Clamart" }
+    },
+    {
+      "id": "flan",
+      "bread": "flan pâtissier",
+      "area": "grand-paris",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Concours du meilleur flan du Grand Paris",
+        "en": "Greater Paris Best Flan",
+        "ko": "그랑파리 최고 플랑"
+      },
+      "what": {
+        "fr": "Le flan pâtissier — la part de crème sur pâte que les Parisiens achètent l'après-midi. Longtemps méprisé, redevenu la pâtisserie la plus disputée de la ville.",
+        "en": "Flan pâtissier — the slab of set custard on pastry Parisians buy in the afternoon. Long looked down on, now the most fought-over pastry in the city.",
+        "ko": "플랑 파티시에 — 파리 사람들이 오후에 사 먹는, 페이스트리 위에 크림을 굳혀 구운 것. 오랫동안 촌스럽다고 무시받다가 지금은 도시에서 가장 경쟁이 치열한 품목이 됐다."
+      },
+      "how": {
+        "fr": "135 inscriptions, 102 flans jugés par une centaine de jurés sur cinq points : la cuisson, la netteté à la coupe, l'harmonie crème/pâte, le goût et la texture de la crème, le goût et la texture de la pâte.",
+        "en": "135 entries, 102 flans judged by around a hundred jurors on five points: the bake, how cleanly it cuts, the balance between custard and pastry, the custard's taste and texture, and the pastry's.",
+        "ko": "135명 접수, 102개를 100명가량이 다섯 가지로 평가: 굽기 · 자른 단면이 깔끔한가 · 크림과 반죽의 균형 · 크림의 맛과 질감 · 반죽의 맛과 질감."
+      },
+      "latest": { "year": 2026, "entries": 102, "who": "Martial Labarbe", "shop": "Sweet Lab", "town": "Courbevoie" }
+    },
+    {
+      "id": "croissant",
+      "bread": "croissant",
+      "area": "grand-paris",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Trophée du meilleur croissant du Grand Paris au beurre Charentes-Poitou AOP",
+        "en": "Greater Paris Best Croissant, Charentes-Poitou AOP butter",
+        "ko": "그랑파리 최고 크루아상 (샤랑트푸아투 AOP 버터)"
+      },
+      "what": {
+        "fr": "Le beurre est imposé : Charentes-Poitou AOP. Tout le monde part donc de la même matière première, et il ne reste que le tour de main.",
+        "en": "The butter is mandated — Charentes-Poitou AOP. Everyone starts from the same raw material, so all that is left to judge is the hand that folded it.",
+        "ko": "버터가 지정돼 있다 — 샤랑트푸아투 AOP. 모두가 같은 재료에서 출발하므로, 남는 건 접는 손기술뿐이다."
+      },
+      "latest": { "year": 2025, "who": "Basile Fourmont", "shop": "Des Racines et du Pain", "town": "Clamart" }
+    },
+    {
+      "id": "tarte-pommes",
+      "bread": "tarte aux pommes",
+      "area": "idf",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Concours de la tarte aux pommes d'Île-de-France",
+        "en": "Île-de-France Best Apple Tart",
+        "ko": "일드프랑스 최고 사과 타르트"
+      },
+      "what": {
+        "fr": "La tarte aux pommes — rien à inventer, tout à réussir.",
+        "en": "The apple tart — nothing to invent, everything to get right.",
+        "ko": "사과 타르트 — 새로 만들어낼 것은 없고, 제대로 해내야 할 것만 있다."
+      }
+    },
+    {
+      "id": "pain-bio",
+      "bread": "pain de campagne bio",
+      "area": "idf",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Concours du meilleur pain de campagne bio d'Île-de-France",
+        "en": "Île-de-France Best Organic Country Loaf",
+        "ko": "일드프랑스 최고 유기농 캉파뉴"
+      },
+      "what": {
+        "fr": "Le pain de campagne, en farine biologique. Une miche, pas une baguette — on la garde plusieurs jours.",
+        "en": "The country loaf, in organic flour. A round loaf, not a baguette — the kind you keep for days.",
+        "ko": "유기농 밀가루로 굽는 시골 빵. 바게트가 아니라 둥글고 큰 덩어리 — 며칠을 두고 먹는 빵이다."
+      }
+    },
+    {
+      "id": "sandwich",
+      "bread": "sandwich",
+      "area": "grand-paris",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Concours du meilleur sandwich",
+        "en": "Best Sandwich",
+        "ko": "최고 샌드위치"
+      },
+      "what": {
+        "fr": "Le déjeuner réel des Parisiens : le sandwich de la boulangerie du coin.",
+        "en": "What Parisians actually eat for lunch: the sandwich from the bakery on the corner.",
+        "ko": "파리 사람들이 실제로 먹는 점심 — 동네 빵집 샌드위치."
+      }
+    },
+    {
+      "id": "baguette-93",
+      "bread": "baguette",
+      "area": "93",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Trophée de la meilleure baguette de tradition de la Seine-Saint-Denis",
+        "en": "Seine-Saint-Denis Best Traditional Baguette",
+        "ko": "센생드니 최고 전통 바게트"
+      },
+      "what": {
+        "fr": "La version départementale du concours parisien, au nord-est de Paris.",
+        "en": "The département-level version of the Paris contest, north-east of the city.",
+        "ko": "파리 대회의 도(道) 단위 버전. 파리 북동쪽 지역."
+      }
+    },
+    {
+      "id": "baguette-94",
+      "bread": "baguette",
+      "area": "94",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Trophée de la meilleure baguette de tradition du Val-de-Marne",
+        "en": "Val-de-Marne Best Traditional Baguette",
+        "ko": "발드마른 최고 전통 바게트"
+      },
+      "what": {
+        "fr": "Même concours, au sud-est de Paris.",
+        "en": "The same contest, south-east of the city.",
+        "ko": "같은 대회, 파리 남동쪽 지역."
+      }
+    },
+    {
+      "id": "baguette-92",
+      "bread": "baguette",
+      "area": "92",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "La Baguette des Hauts-de-Seine",
+        "en": "Hauts-de-Seine Baguette",
+        "ko": "오드센 바게트"
+      },
+      "what": {
+        "fr": "Même concours, à l'ouest. Deux catégories : chefs d'entreprise et salariés.",
+        "en": "The same contest, to the west. Two categories: shop owners and employed bakers.",
+        "ko": "같은 대회, 파리 서쪽. 사장부와 직원부 두 부문으로 나뉜다."
+      }
+    },
+    {
+      "id": "artisan-92",
+      "bread": "artisan",
+      "area": "92",
+      "cadence": "annual",
+      "organiser": "Syndicat des Boulangers du Grand Paris",
+      "name": {
+        "fr": "Meilleur artisan boulanger des Hauts-de-Seine",
+        "en": "Hauts-de-Seine Best Artisan Baker",
+        "ko": "오드센 최고 장인 제빵사"
+      },
+      "what": {
+        "fr": "Pas un produit mais une maison : on juge le boulanger sur l'ensemble de ce qu'il sort.",
+        "en": "Not one product but a whole shop: the baker is judged on everything they put out.",
+        "ko": "한 품목이 아니라 가게 전체를 본다 — 그 제빵사가 내놓는 모든 것을 놓고 평가한다."
+      }
+    },
+    {
+      "id": "mof",
+      "bread": "artisan",
+      "area": "france",
+      "since": 1924,
+      "cadence": "every 3–4 years",
+      "organiser": "État français",
+      "name": {
+        "fr": "Un des Meilleurs Ouvriers de France — Boulangerie",
+        "en": "One of the Best Craftsmen of France — Baking",
+        "ko": "프랑스 국가 최고장인 (MOF) — 제빵"
+      },
+      "what": {
+        "fr": "La plus haute distinction artisanale décernée par l'État français depuis 1924, dans plus de 200 métiers. Le lauréat porte à vie le col bleu-blanc-rouge.",
+        "en": "The highest craft distinction awarded by the French State since 1924, across more than 200 trades. Winners wear the blue-white-red collar for life.",
+        "ko": "1924년부터 프랑스 정부가 200여 개 직종에 수여하는 최고의 장인 칭호. 수상자는 **평생** 파랑·하양·빨강 삼색 깃을 단 조리복을 입는다."
+      },
+      "how": {
+        "fr": "Ouvert à partir de 23 ans, sans autre condition. Épreuves qualificatives puis une finale dont le sujet n'est pas connu à l'avance. Il faut 16/20 pour obtenir le titre — certaines sessions ne couronnent personne.",
+        "en": "Open from age 23, with no other requirement. Qualifying rounds, then a final whose subject is not announced in advance. A score of 16/20 is needed to earn the title — some sessions crown nobody.",
+        "ko": "23세 이상이면 누구나 응시할 수 있고 다른 조건은 없다. 예선을 거쳐 **과제를 미리 알려주지 않는** 결선을 치른다. 20점 만점에 16점을 넘겨야 칭호를 받으며, 아무도 통과하지 못하는 회차도 있다."
+      }
+    },
+    {
+      "id": "croissant-isigny",
+      "bread": "croissant",
+      "area": "france",
+      "cadence": "annual",
+      "organiser": "Isigny Sainte-Mère + écoles hôtelières",
+      "name": {
+        "fr": "Meilleur Croissant au Beurre d'Isigny",
+        "en": "Best Croissant with Isigny Butter",
+        "ko": "이지니 버터 최고 크루아상"
+      },
+      "what": {
+        "fr": "Sélections régionales puis finale nationale. Les Franciliens qualifiés vont se mesurer aux autres régions.",
+        "en": "Regional heats, then a national final. Qualifiers from the Paris region go up against every other region.",
+        "ko": "지역 예선을 거쳐 전국 결선으로 간다. 파리권 통과자는 다른 지역 대표들과 겨룬다."
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #8C5216; text-decoration: none; } a:hover { color: #C4832E; }
+    .ser { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .lbl { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 9.5px;
+           letter-spacing: 2.2px; color: #6F6250; text-transform: uppercase; }
+    .m { padding: 10px 0 11px; border-bottom: 1px solid #F0E7D2; }
+    .mh { font-size: 11.5px; color: #544737; }
+    .mv { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px;
+           font-weight: 500; width: 62px; }
+    .win { color: #8C5216; }
+    .lose { color: #6F6250; }
+    .said { font-size: 10.5px; color: #6F6250; margin-top: 5px; line-height: 1.45; }
+  </style>
+</helmet>
+
+<div style="font-family: 'IBM Plex Sans KR', system-ui, sans-serif; width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #F7F0DF; color: #2A2118; padding: 24px 20px 0;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.6" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <div class="lbl">눈으로 재기</div>
+    <div class="mono" style="font-size: 10.5px; color: #8C5216;">다시 찍기</div>
+  </div>
+
+  <div style="margin-top: 15px;">
+    <div class="ser" style="font-size: 23px; font-weight: 600; line-height: 1.2;">사진은 맛을 모릅니다</div>
+    <div style="font-size: 11.5px; color: #544737; margin-top: 5px; line-height: 1.55;">
+      대신 대회가 채점하는 항목 중 <strong style="font-weight: 600;">넷</strong>은 사진에서 잽니다. 판정은 하지 않습니다.</div>
+  </div>
+
+  <div style="border: 1px solid #E2D6B9; background: #FCF8EE; margin-top: 14px; padding: 10px 10px 8px;">
+    <svg width="328" height="150" viewBox="0 0 328 150">
+      <rect width="328" height="150" fill="#EFE4C9"/>
+
+      <g transform="translate(84 75)">
+        <ellipse rx="62" ry="44" fill="#C4832E"/>
+        <ellipse rx="53" ry="36" fill="#DBA860"/>
+        <g fill="none" stroke="#8C5216" stroke-width="1.5" opacity="0.75">
+          <path d="M-46 -8 C -30 -30, 0 -34, 16 -18"/>
+          <path d="M-38 6 C -22 -18, 10 -22, 28 -4"/>
+          <path d="M-28 20 C -10 -4, 22 -8, 38 10"/>
+          <path d="M-14 30 C 4 8, 32 6, 44 22"/>
+        </g>
+        <g fill="#F7F0DF" opacity="0.9">
+          <ellipse cx="-24" cy="-4" rx="8" ry="5" transform="rotate(-18)"/>
+          <ellipse cx="6" cy="10" rx="11" ry="6" transform="rotate(-14)"/>
+          <ellipse cx="26" cy="-8" rx="6" ry="4"/>
+          <ellipse cx="-8" cy="22" rx="7" ry="4"/>
+        </g>
+        <g fill="none" stroke="#77794F" stroke-width="1.1" stroke-dasharray="2 2">
+          <ellipse cx="-24" cy="-4" rx="11" ry="8"/>
+          <ellipse cx="6" cy="10" rx="14" ry="9"/>
+          <ellipse cx="26" cy="-8" rx="9" ry="7"/>
+          <ellipse cx="-8" cy="22" rx="10" ry="7"/>
+        </g>
+      </g>
+
+      <g transform="translate(238 75)">
+        <ellipse rx="58" ry="42" fill="#DBA860"/>
+        <ellipse rx="50" ry="34" fill="#E9C793"/>
+        <g fill="none" stroke="#C4832E" stroke-width="1.5" opacity="0.7">
+          <path d="M-42 -6 C -26 -26, 2 -30, 18 -16"/>
+          <path d="M-32 10 C -14 -12, 16 -16, 32 0"/>
+          <path d="M-18 26 C 0 4, 28 2, 40 18"/>
+        </g>
+        <g fill="#F7F0DF" opacity="0.9">
+          <ellipse cx="-18" cy="0" rx="6" ry="4"/>
+          <ellipse cx="2" cy="6" rx="6" ry="4"/>
+          <ellipse cx="20" cy="-2" rx="6" ry="4"/>
+          <ellipse cx="-2" cy="-14" rx="5" ry="4"/>
+          <ellipse cx="14" cy="16" rx="6" ry="4"/>
+        </g>
+        <g fill="none" stroke="#77794F" stroke-width="1.1" stroke-dasharray="2 2">
+          <ellipse cx="-18" cy="0" rx="9" ry="7"/>
+          <ellipse cx="2" cy="6" rx="9" ry="7"/>
+          <ellipse cx="20" cy="-2" rx="9" ry="7"/>
+          <ellipse cx="-2" cy="-14" rx="8" ry="6"/>
+          <ellipse cx="14" cy="16" rx="9" ry="7"/>
+        </g>
+      </g>
+
+      <line x1="164" y1="14" x2="164" y2="136" stroke="#F7F0DF" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.8"/>
+      <text x="14" y="24" class="mono" font-size="9" fill="#FCF8EE" opacity="0.95">A</text>
+      <text x="314" y="24" text-anchor="end" class="mono" font-size="9" fill="#544737" opacity="0.95">B</text>
+    </svg>
+    <div style="display: flex; align-items: center; gap: 7px; margin-top: 7px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8C5216" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.4"/><path d="M12 8.2v4.4M12 16h.01"/></svg>
+      <div style="font-size: 10.5px; color: #544737; line-height: 1.4;">
+        <strong style="font-weight: 600;">둘을 나란히 놓고 한 장으로</strong> 찍으세요 — 빛이 같아야 색을 비교할 수 있습니다.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 10px; margin-top: 13px;">
+    <div style="flex: 1 1 0;">
+      <div class="mono" style="font-size: 9px; color: #8C5216; letter-spacing: 1.6px;">A</div>
+      <div class="ser" style="font-size: 15px; font-weight: 600; line-height: 1.15; margin-top: 2px;">Le Moulin de la Croix Nivert</div>
+    </div>
+    <div style="width: 1px; background: #E2D6B9;"></div>
+    <div style="flex: 1 1 0; text-align: right;">
+      <div class="mono" style="font-size: 9px; color: #6F6250; letter-spacing: 1.6px;">B</div>
+      <div class="ser" style="font-size: 15px; font-weight: 600; line-height: 1.15; margin-top: 2px;">La Fabrique aux gourmandises</div>
+    </div>
+  </div>
+
+  <div class="lbl" style="margin-top: 16px;">잰 것 — 크루아상</div>
+
+  <div style="margin-top: 4px;">
+
+    <div class="m">
+      <div class="mh">굽기 — 껍질 색</div>
+      <div class="mv">
+        <div style="width: 18px; height: 18px; background: #C4832E; border: 1px solid #E2D6B9;"></div>
+        <div class="num win">47</div>
+        <div style="flex: 1 1 auto; height: 4px; background: #E9DCC2; position: relative;">
+          <div style="position: absolute; left: 0; width: 47%; height: 4px; background: #8C5216;"></div>
+          <div style="position: absolute; right: 0; width: 42%; height: 4px; background: #CFC0A0;"></div>
+        </div>
+        <div class="num lose" style="text-align: right;">58</div>
+        <div style="width: 18px; height: 18px; background: #DBA860; border: 1px solid #E2D6B9;"></div>
+      </div>
+      <div class="said">A가 더 진하게 구웠습니다. 대회는 이걸 <span class="ser" style="font-style: italic;">cuisson</span>이라 부르고 0~4점을 줍니다.</div>
+    </div>
+
+    <div class="m">
+      <div class="mh">결 — 단면의 층</div>
+      <div class="mv">
+        <div class="num win">18층</div>
+        <div style="flex: 1 1 auto; height: 4px; background: #E9DCC2; position: relative;">
+          <div style="position: absolute; left: 0; width: 56%; height: 4px; background: #8C5216;"></div>
+          <div style="position: absolute; right: 0; width: 44%; height: 4px; background: #CFC0A0;"></div>
+        </div>
+        <div class="num lose" style="text-align: right;">14층</div>
+      </div>
+      <div class="said">가운데를 가로지르는 선을 따라 밝고 어두운 띠를 셉니다. A가 더 여러 번 접었습니다.</div>
+    </div>
+
+    <div class="m">
+      <div class="mh">기공 — 구멍이 고른 정도</div>
+      <div class="mv">
+        <div class="num" style="color: #2A2118;">거칠다</div>
+        <div style="flex: 1 1 auto; height: 4px; background: #E9DCC2; position: relative;">
+          <div style="position: absolute; left: 0; width: 61%; height: 4px; background: #77794F;"></div>
+          <div style="position: absolute; right: 0; width: 34%; height: 4px; background: #CFC0A0;"></div>
+        </div>
+        <div class="num" style="text-align: right; color: #2A2118;">고르다</div>
+      </div>
+      <div class="said">구멍 넷 · 크기가 제각각(0.61) vs 구멍 다섯 · 거의 같음(0.34). 어느 쪽이 낫다고는 말하지 않습니다.</div>
+    </div>
+
+    <div class="m" style="border-bottom: none;">
+      <div class="mh">껍질 두께 — 지름 대비</div>
+      <div class="mv">
+        <div class="num" style="color: #2A2118;">14%</div>
+        <div style="flex: 1 1 auto; height: 4px; background: #E9DCC2; position: relative;">
+          <div style="position: absolute; left: 0; width: 47%; height: 4px; background: #77794F;"></div>
+          <div style="position: absolute; right: 0; width: 33%; height: 4px; background: #CFC0A0;"></div>
+        </div>
+        <div class="num" style="text-align: right; color: #2A2118;">10%</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: flex-start; gap: 9px; border-left: 3px solid #C4832E; padding: 2px 0 2px 11px; margin-top: 12px;">
+    <div style="font-size: 11px; color: #544737; line-height: 1.55;">
+      숫자는 <strong style="font-weight: 600;">근거일 뿐</strong>입니다. 진하게 구운 게 늘 나은 것도, 고른 기공이 나쁜 것도 아닙니다. 고르는 건 당신입니다.</div>
+  </div>
+
+  <div style="position: absolute; left: 20px; right: 20px; bottom: 28px; display: flex; gap: 8px;">
+    <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; height: 52px; background: #8C5216; color: #FCF8EE; font-size: 13px; font-weight: 600;">A가 나았다</div>
+    <div style="flex: 1 1 0; display: flex; align-items: center; justify-content: center; height: 52px; border: 1px solid #E2D6B9; background: #FCF8EE; font-size: 13px; color: #544737;">B가 나았다</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #8C5216; text-decoration: none; } a:hover { color: #C4832E; }
+    .ser { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .lbl { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 9.5px;
+           letter-spacing: 2.2px; color: #6F6250; text-transform: uppercase; }
+  </style>
+</helmet>
+
+<div style="font-family: 'IBM Plex Sans KR', system-ui, sans-serif; width: 390px; height: 460px; box-sizing: border-box; position: relative; overflow: hidden; background: #F7F0DF; color: #2A2118; padding: 22px 20px;">
+
+  <div style="display: flex; align-items: baseline; justify-content: space-between;">
+    <div class="lbl">아이콘</div>
+    <div class="mono" style="font-size: 9.5px; color: #6F6250;">180 · 120 · 60 · 40</div>
+  </div>
+
+  <div style="display: flex; align-items: flex-end; gap: 16px; margin-top: 16px;">
+
+    <svg width="120" height="120" viewBox="0 0 180 180" style="flex-shrink: 0;">
+      <rect width="180" height="180" rx="40" fill="#F7F0DF"/>
+      <rect x="0.75" y="0.75" width="178.5" height="178.5" rx="39.5" fill="none" stroke="#E2D6B9" stroke-width="1.5"/>
+      <g stroke="#C4832E" stroke-width="17" stroke-linecap="round">
+        <path d="M44 116 L74 62"/><path d="M75 124 L105 70"/><path d="M106 116 L136 62"/>
+      </g>
+    </svg>
+
+    <svg width="80" height="80" viewBox="0 0 180 180" style="flex-shrink: 0;">
+      <rect width="180" height="180" rx="40" fill="#8C5216"/>
+      <g stroke="#F7F0DF" stroke-width="17" stroke-linecap="round">
+        <path d="M44 116 L74 62"/><path d="M75 124 L105 70"/><path d="M106 116 L136 62"/>
+      </g>
+    </svg>
+
+    <svg width="52" height="52" viewBox="0 0 180 180" style="flex-shrink: 0;">
+      <rect width="180" height="180" rx="40" fill="#F7F0DF"/>
+      <rect x="0.75" y="0.75" width="178.5" height="178.5" rx="39.5" fill="none" stroke="#E2D6B9" stroke-width="1.5"/>
+      <circle cx="90" cy="90" r="62" fill="none" stroke="#C4832E" stroke-width="5"/>
+      <g stroke="#C4832E" stroke-width="11" stroke-linecap="round">
+        <path d="M58 108 L79 70"/><path d="M80 114 L101 76"/><path d="M102 108 L123 70"/>
+      </g>
+    </svg>
+
+    <svg width="34" height="34" viewBox="0 0 180 180" style="flex-shrink: 0;">
+      <rect width="180" height="180" rx="40" fill="#F7F0DF"/>
+      <rect x="0.75" y="0.75" width="178.5" height="178.5" rx="39.5" fill="none" stroke="#E2D6B9" stroke-width="1.5"/>
+      <g stroke="#C4832E" stroke-width="17" stroke-linecap="round">
+        <path d="M44 116 L74 62"/><path d="M75 124 L105 70"/><path d="M106 116 L136 62"/>
+      </g>
+    </svg>
+  </div>
+
+  <div style="font-size: 11.5px; color: #544737; line-height: 1.6; margin-top: 16px;">
+    도장 한가운데에 있는 <strong style="font-weight: 600;">칼집</strong>을 그대로 씁니다 —
+    제빵사가 굽기 직전 반죽에 긋는 세 줄(<span class="ser" style="font-style: italic;">grigne</span>).
+    잘 부푼 빵에만 이 자국이 남아서, 프랑스에서는 이걸 보고 빵을 고릅니다.</div>
+
+  <div style="height: 1px; background: #E2D6B9; margin: 18px 0 16px;"></div>
+
+  <div class="lbl">잠금 화면과 첫 화면</div>
+
+  <div style="display: flex; align-items: center; gap: 18px; margin-top: 14px;">
+    <div style="text-align: center;">
+      <svg width="62" height="62" viewBox="0 0 180 180">
+        <rect width="180" height="180" rx="40" fill="#F7F0DF"/>
+        <rect x="0.75" y="0.75" width="178.5" height="178.5" rx="39.5" fill="none" stroke="#E2D6B9" stroke-width="1.5"/>
+        <g stroke="#C4832E" stroke-width="17" stroke-linecap="round">
+          <path d="M44 116 L74 62"/><path d="M75 124 L105 70"/><path d="M106 116 L136 62"/></g>
+      </svg>
+      <div style="font-size: 10.5px; color: #544737; margin-top: 6px;">Miette</div>
+    </div>
+
+    <div style="width: 1px; height: 56px; background: #E2D6B9;"></div>
+
+    <div>
+      <div class="ser" style="font-size: 30px; font-weight: 600; letter-spacing: 9px; line-height: 1;">MIETTE</div>
+      <div class="ser" style="font-style: italic; font-size: 14px; color: #6F6250; margin-top: 6px;">빵자취를 따라서</div>
+      <div class="ser" style="font-style: italic; font-size: 12.5px; color: #BEAE8E; margin-top: 2px;">Sur la piste du pain</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
