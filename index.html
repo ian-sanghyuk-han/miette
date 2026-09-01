@@ -14,6 +14,16 @@
 <meta name="apple-mobile-web-app-title" content="Miette">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-440x956@3x.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-430x932@3x.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-402x874@3x.png" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-393x852@3x.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-428x926@3x.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-414x896@3x.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-414x896@2x.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-390x844@3x.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-375x812@3x.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-375x667@2x.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -43,20 +53,24 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 #veil{position:absolute;top:0;left:0;right:0;height:calc(150px + var(--safeT));pointer-events:none;
   background:linear-gradient(180deg,var(--paper) 0%,rgba(247,240,223,.94) 46%,rgba(247,240,223,0) 100%)}
 
-#head{position:absolute;top:calc(14px + var(--safeT));left:16px;right:16px}
-.headrow{display:flex;align-items:baseline;justify-content:space-between}
-#wordmark{font-size:24px;font-weight:600;letter-spacing:6.5px}
-#tagline{font-style:italic;font-size:13.5px;color:var(--mute);margin-top:1px}
-#langbtn{font-size:10px;letter-spacing:1.4px;color:var(--crustDeep);border:1px solid var(--line);
-  padding:5px 9px;background:rgba(252,248,238,.8)}
-#bar{display:flex;align-items:center;gap:8px;margin-top:12px}
-#bar2{display:flex;align-items:center;gap:6px;margin-top:7px}
+#head{position:absolute;top:calc(12px + var(--safeT));left:14px;right:14px}
+.headrow{display:flex;align-items:center;gap:9px}
+#wordmark{font-size:17px;font-weight:600;letter-spacing:3.6px;flex:0 0 auto}
+#searchField{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:7px;height:36px;
+  padding:0 12px;border:1px solid var(--line);border-radius:18px;
+  background:rgba(252,248,238,.92);box-shadow:0 1px 5px rgba(42,33,24,.06);
+  color:var(--mute);font-size:12.5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#langbtn{flex:0 0 auto;font-size:10px;letter-spacing:1.2px;color:var(--crustDeep);
+  border:1px solid var(--line);border-radius:16px;padding:0 10px;height:36px;
+  background:rgba(252,248,238,.92)}
+#bar{display:flex;align-items:center;gap:8px;margin-top:9px}
+#bar2{display:flex;align-items:center;gap:6px;margin-top:6px}
 #chips,#chips2{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 auto;
   padding-bottom:2px;-webkit-overflow-scrolling:touch}
 #chips::-webkit-scrollbar,#chips2::-webkit-scrollbar{display:none}
 #barSep{width:1px;height:22px;background:var(--line);flex:0 0 auto}
 /* square = tick as many as you like; the pills above are pick-one */
-.tog{display:flex;align-items:center;gap:5px;height:29px;padding:0 10px;flex:0 0 auto;
+.tog{display:flex;align-items:center;gap:5px;height:28px;padding:0 10px;flex:0 0 auto;
   border:1px solid var(--line);border-radius:4px;background:rgba(252,248,238,.86);
   color:var(--ink2);font-size:11px;white-space:nowrap}
 .tog.on{border-color:var(--crustDeep);background:var(--crustDeep);color:var(--card);font-weight:500}
@@ -92,7 +106,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .fsub{margin-left:33px;border-left:1px solid var(--line);padding-left:14px}
 .fhead{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:2.2px;
   color:var(--mute);text-transform:uppercase;margin-top:20px}
-.chip{padding:7px 13px;border-radius:15px;border:1px solid var(--line);
+.chip{padding:6px 12px;border-radius:15px;border:1px solid var(--line);
   background:rgba(252,248,238,.86);color:var(--ink2);font-size:11.5px;white-space:nowrap;flex:0 0 auto}
 .chip.on{background:var(--crustDeep);color:var(--card);border-color:var(--crustDeep);font-weight:500}
 /* one level down: same row, lighter weight, the trade's own colour */
@@ -199,9 +213,13 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
     <div id="head">
       <div class="headrow">
         <div class="ser" id="wordmark">MIETTE</div>
+        <button id="searchField">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6F6250" stroke-width="1.7"
+               stroke-linecap="round" style="flex:0 0 auto"><circle cx="10.5" cy="10.5" r="6.8"/><path d="M15.5 15.5L21 21"/></svg>
+          <span id="searchFieldLbl"></span>
+        </button>
         <button id="langbtn" class="mono">KO</button>
       </div>
-      <div class="ser" id="tagline">빵자취를 따라서</div>
       <div id="bar">
         <div id="chips"></div>
       </div>
@@ -218,17 +236,6 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
       <button class="tool" id="zoomAll" aria-label="whole city">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg>
-      </button>
-      <button class="tool" id="searchBtn" aria-label="search">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.6"
-             stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.8"/><path d="M15.5 15.5L21 21"/></svg>
-      </button>
-      <button class="tool" id="openBtn" aria-label="open now">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.5"
-             stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8.4 6.4c-.9-1 .5-1.9-.4-2.9M12 6.1c-.9-1 .5-1.9-.4-2.9M15.6 6.4c-.9-1 .5-1.9-.4-2.9"/>
-          <path d="M3.6 17.4c0-3.9 3.8-7 8.4-7s8.4 3.1 8.4 7z"/>
-          <path d="M2.6 17.4h18.8"/></svg>
       </button>
       <button class="tool" id="legendBtn" aria-label="legend">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#544737" stroke-width="1.5"

@@ -1049,8 +1049,8 @@ function paintChips() {
   $('#chips').innerHTML = html;
   const TICK2 = `<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor"
       stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-7"/></svg>`;
-  const R2 = [['onlyAward', awardChipLabel()], ['onlyIndie', T('f_indie')],
-              ['onlyWish', T('wish')]];
+  const R2 = [['onlyOpen', T('f_open')], ['onlyAward', awardChipLabel()],
+              ['onlyIndie', T('f_indie')], ['onlyWish', T('wish')]];
   $('#chips2').innerHTML = R2.map(([id, l]) =>
     `<button class="tog ${state[id] ? 'on' : ''}" data-t="${id}">${state[id] ? TICK2 : ''}${esc(l)}</button>`).join('');
 
@@ -1083,6 +1083,11 @@ $('#chips').addEventListener('click', e => {
 $('#chips2').addEventListener('click', e => {
   const b = e.target.closest('.tog'); if (!b) return;
   state[b.dataset.t] = !state[b.dataset.t];
+  if (b.dataset.t === 'onlyOpen') {
+    paintChips(); paintStrip(); render();
+    if (state.onlyOpen) openNearby(); else closeSheets();
+    return;
+  }
   if (b.dataset.t === 'onlyAward' && !state.onlyAward) {
     state.awardComps = []; state.onlyWinner = false; state.onlyMulti = false;
   }
@@ -1284,7 +1289,7 @@ function setLang(l) {
   try { localStorage.setItem('miette.lang', l); } catch (e) {}
   document.documentElement.lang = l;
   $('#langbtn').textContent = l.toUpperCase();
-  $('#tagline').textContent = T('tagline');
+  $('#searchFieldLbl').textContent = T('s_ph');
   paintChips(); paintStrip(); paintTabs(); render();
 }
 $('#langbtn').onclick = openLangs;
@@ -1292,11 +1297,77 @@ $('#wordmark').onclick = openSettings;
 
 $('#zoomAll').onclick = () => { fitAll(); render(); };
 $('#legendBtn').onclick = openLegend;
-$('#openBtn').onclick = () => {
-  state.onlyOpen = !state.onlyOpen;
-  paintChips(); paintStrip(); render(); paintOpenBtn();
-};
-function paintOpenBtn() { $('#openBtn').classList.toggle('on', state.onlyOpen); }
+/* metres, from the world units the map is drawn in */
+const metres = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by) / S * 111320;
+const walk = m => Math.max(1, Math.round(m / 80));      // 80 m a minute, unhurried
+function dist(m) {
+  return m < 950 ? Math.round(m / 10) * 10 + ' m' : (m / 1000).toFixed(1) + ' km';
+}
+
+function openNearby() {
+  const from = state.here || { x: state.cx, y: state.cy };
+  const rows = state.places
+    .filter(q => q.O === true && ofKind(q) &&
+      (!state.onlyAward || awardOk(q)) && (!state.onlyIndie || !q.b) &&
+      (!state.onlyWish || state.wish[q.id]) &&
+      (!state.onlyUnvisited || !(state.visits[q.id] || []).length))
+    .map(q => ({ q, m: metres(from.x, from.y, q.WX, q.WY) }))
+    .sort((a, b) => a.m - b.m);
+  const total = rows.length;
+  const shown = rows.slice(0, 60);
+
+  const body = shown.length ? shown.map(({ q, m }) => `
+    <div class="aw" data-id="${esc(q.id)}">
+      <svg width="16" height="16" viewBox="0 0 16 16" style="flex:0 0 auto">
+        <circle cx="8" cy="8" r="7.5" fill="${C.glow}" opacity=".30"/>
+        <circle cx="8" cy="8" r="4.2" fill="${KIND[q.k]}"/></svg>
+      <div style="flex:1 1 auto;min-width:0">
+        <div class="ser" style="font-size:15px;font-weight:600;line-height:1.2;
+             overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(q.n)}</div>
+        <div class="mono" style="font-size:9.5px;color:var(--mute);margin-top:2px;
+             overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(q.s || T('no_addr'))} · ${q.a}e</div>
+      </div>
+      ${q.aw ? `<svg width="16" height="14" viewBox="0 0 16 14" style="flex:0 0 auto">
+        <g fill="none" stroke="${C.crustDeep}" stroke-width="1.3" stroke-linecap="round">
+        <path d="M4.6 3.4 Q1.4 7 4.6 10.6"/><path d="M11.4 3.4 Q14.6 7 11.4 10.6"/></g>
+        <circle cx="8" cy="7" r="2.3" fill="${C.crust}"/></svg>` : ''}
+      <div style="flex:0 0 auto;text-align:right">
+        <div class="mono" style="font-size:11.5px;color:${C.crustDeep};font-weight:500">${esc(dist(m))}</div>
+        <div class="mono" style="font-size:9px;color:var(--mute);margin-top:1px">${esc(T('o_min', walk(m)))}</div>
+      </div>
+    </div>`).join('')
+    : `<div style="text-align:center;padding:44px 0 24px">
+        <div style="font-size:13px;font-weight:600">${esc(T('o_none'))}</div>
+        <div style="font-size:11.5px;color:var(--mute);margin-top:6px;line-height:1.55">${esc(T('o_none_d'))}</div></div>`;
+
+  $('#setSheet').onclick = null;
+  $('#setSheet').innerHTML = `
+    <div class="grip"></div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between">
+      <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('o_title'))}</div>
+      <div class="mono" style="font-size:10.5px;color:var(--mute)">${esc(T('s_count', total))}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+      <div style="width:6px;height:6px;border-radius:3px;background:${state.here ? C.seine : C.faint}"></div>
+      <div style="font-size:11px;color:var(--mute)">${esc(state.here ? T('o_near') : T('o_center'))}</div>
+    </div>
+    ${state.here ? '' : `<button class="cta ghost" style="margin-top:11px" id="nbLocate">${esc(T('o_locate'))}</button>`}
+    <div class="mono" style="font-size:9.5px;color:var(--mute);margin-top:10px">${esc(T('paris_time', parisClock()))}</div>
+    <div style="margin-top:4px">${body}</div>
+    ${total > shown.length ? `<div class="mono" style="font-size:9.5px;color:var(--mute);
+      text-align:center;margin-top:12px">${esc(T('o_more', total - shown.length))}</div>` : ''}`;
+
+  $('#setSheet').onclick = e => {
+    const row = e.target.closest('[data-id]'); if (!row) return;
+    const q = state.byId[row.dataset.id]; if (!q) return;
+    state.cx = q.WX; state.cy = q.WY; state.k = Math.max(state.k, 1.4);
+    clampView(); render(); openPlace(q);
+  };
+  const lb = $('#nbLocate');
+  if (lb) lb.onclick = () => { state.follow = true; paintLocateBtn(); startWatch(true); };
+  show('setSheet');
+}
+function paintOpenBtn() { /* the open-now switch lives on the chip row now */ }
 
 function openLegend() {
   const swatch = (i) => `<span style="display:inline-flex;width:14px;height:14px;border-radius:8px;background:${KIND[i]};flex:0 0 auto"></span>`;
@@ -1362,6 +1433,7 @@ function startWatch(recentre) {
     }
     first = false;
     clampView(); render();
+    if ($('#setSheet').classList.contains('open') && state.onlyOpen) openNearby();
   }, err => {
     state.follow = false; paintLocateBtn();
     toast(err.code === 1 ? T('geo_denied') : T('geo_no'));
@@ -2244,7 +2316,7 @@ function openSearch() {
 }
 function closeSearch() { $('#search').classList.remove('on'); }
 
-$('#searchBtn').onclick = openSearch;
+$('#searchField').onclick = openSearch;
 $('#searchBack').onclick = closeSearch;
 $('#searchClear').onclick = () => { $('#searchIn').value = ''; paintSearch(); $('#searchIn').focus(); };
 $('#searchIn').addEventListener('input', paintSearch);
@@ -2409,7 +2481,7 @@ async function boot() {
   state.ready = true;
   paintChips(); paintStrip(); paintTabs();
   $('#langbtn').textContent = state.lang.toUpperCase();
-  $('#tagline').textContent = T('tagline');
+  $('#searchFieldLbl').textContent = T('s_ph');
   clampView(); render();
   // on a warm cache the data is back in 80 ms and the tower never gets seen
   const held = Math.max(0, 1500 - (Date.now() - BOOT_AT));
