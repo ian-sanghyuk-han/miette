@@ -20,7 +20,7 @@ window.I18N = {
     outside: '평점과 사진은 밖에서 봅니다 — 여기엔 담지 않습니다',
     chain: '여러 지점',
     mine: '내 기록', not_yet: '아직 가지 않았습니다',
-    stamp: '스탬프 찍기', stamped_n: '스탬프 %s번',
+    stamp: '스탬프', stamped_n: '스탬프 %s번',
     visited_on: '%s에 다녀왔습니다',
     stamp_title: '스탬프', stamp_first: '첫 번째 스탬프입니다',
     stamp_again: '%s번째 스탬프입니다',

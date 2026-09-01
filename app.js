@@ -2567,7 +2567,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v36';
+const BUILD = 'v37';
 const BOOT_AT = Date.now();
 
 async function boot() {
