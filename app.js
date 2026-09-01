@@ -1234,10 +1234,15 @@ function paintChips() {
   $('#lamp').className = state.onlyOpen ? 'on' : '';
   $('#lamp').innerHTML = MARK.glow + esc(T('f_open'));
   // the groups are labels; the trades belonging to them are the buttons
-  // each pair in its own field: the grouping costs no width and needs no word
+  // two fields, each tinted with its own family — bread and sweets are not the
+  // same errand, and the ground they sit on should say so before the words do
+  const field = (tint, edge, title, inner) =>
+    `<div class="tgroup" title="${esc(title)}" style="background:${tint};border-color:${edge}">${inner}</div>`;
   $('#chips2').innerHTML =
-    `<div class="tgroup" title="${esc(T('g_bread'))}">${tradeChip(0)}${tradeChip(1)}</div>` +
-    `<div class="tgroup" title="${esc(T('g_sweet'))}">${tradeChip(2)}${tradeChip(3)}</div>`;
+    field('rgba(196,131,46,.10)', 'rgba(196,131,46,.34)', T('g_bread'),
+          tradeChip(0) + tradeChip(1)) +
+    field('rgba(126,99,140,.10)', 'rgba(126,99,140,.32)', T('g_sweet'),
+          tradeChip(2) + tradeChip(3));
 
   $('#chips3').innerHTML =
     markChip('onlyAward', awardChipLabel(), 'award') +
@@ -2619,7 +2624,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v31';
+const BUILD = 'v32';
 const BOOT_AT = Date.now();
 
 async function boot() {
