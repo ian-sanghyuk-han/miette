@@ -19,7 +19,8 @@ const C = {
   paper: '#F7F0DF', paperDeep: '#EFE4C9', card: '#FCF8EE',
   ink: '#2A2118', ink2: '#544737', mute: '#6F6250', line: '#E2D6B9',
   faint: '#CFC0A0', crust: '#C4832E', crustDeep: '#8C5216',
-  olive: '#77794F', seine: '#9DAEAC'
+  olive: '#77794F', seine: '#9DAEAC',
+  road: '#FBF6EA', roadEdge: '#E4D7B7', park: '#A8B183'
 };
 
 // one hue per trade — the map should say what a shop is before you read a word
@@ -103,6 +104,17 @@ function clampView() {
 }
 
 /* ------------------------------------------------------------------ render */
+function linePath(flat) {
+  ctx.moveTo(sx(flat[0]), sy(flat[1]));
+  for (let i = 2; i < flat.length; i += 2) ctx.lineTo(sx(flat[i]), sy(flat[i + 1]));
+}
+
+function onScreen(o) {
+  const k = state.k, hw = VW / 2 / k, hh = VH / 2 / k;
+  return o.x1 > state.cx - hw && o.x0 < state.cx + hw &&
+         o.y1 > state.cy - hh && o.y0 < state.cy + hh;
+}
+
 function ringPath(flat) {
   ctx.moveTo(sx(flat[0]), sy(flat[1]));
   for (let i = 2; i < flat.length; i += 2) ctx.lineTo(sx(flat[i]), sy(flat[i + 1]));
@@ -133,11 +145,42 @@ function render() {
     ctx.fillStyle = C.crust; ctx.globalAlpha = .14; ctx.fill(); ctx.globalAlpha = 1;
   }
 
+  // parks and woods
+  if (state.green) {
+    ctx.beginPath();
+    for (const g of state.green) { if (!onScreen(g)) continue; ringPath(g.W); }
+    ctx.fillStyle = C.park; ctx.globalAlpha = .30; ctx.fill(); ctx.globalAlpha = 1;
+  }
+
   ctx.beginPath(); state.paris.water.forEach(w => ringPath(w));
-  ctx.fillStyle = C.seine; ctx.globalAlpha = .32; ctx.fill(); ctx.globalAlpha = 1;
+  ctx.fillStyle = C.seine; ctx.globalAlpha = .34; ctx.fill(); ctx.globalAlpha = 1;
+
+  // the streets, pale channels cut through the block colour
+  if (state.roads) {
+    const WID = [
+      Math.max(1.6, 7.5 * k), Math.max(1.0, 4.6 * k),
+      Math.max(0.7, 3.0 * k), Math.max(0.5, 2.0 * k)
+    ];
+    const SHOW = [0, 0, .16, .34];              // a tier appears once it can be seen
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    // the ring road gets a casing so the edge of Paris reads
+    if (k > .12) {
+      ctx.beginPath();
+      for (const w of state.roads[0]) { if (!onScreen(w)) continue; linePath(w.W); }
+      ctx.strokeStyle = C.roadEdge; ctx.lineWidth = WID[0] + 1.6;
+      ctx.globalAlpha = .7; ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    for (let t = 3; t >= 0; t--) {
+      if (k < SHOW[t]) continue;
+      ctx.beginPath();
+      for (const w of state.roads[t]) { if (!onScreen(w)) continue; linePath(w.W); }
+      ctx.strokeStyle = C.road; ctx.lineWidth = WID[t];
+      ctx.globalAlpha = t === 3 ? .8 : 1; ctx.stroke(); ctx.globalAlpha = 1;
+    }
+  }
 
   ctx.beginPath(); state.paris.arr.forEach(a => ringPath(a.W));
-  ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.globalAlpha = .8; ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.strokeStyle = C.line; ctx.lineWidth = 1.1; ctx.globalAlpha = .85; ctx.stroke(); ctx.globalAlpha = 1;
 
   // arrondissement numbers, while the city still reads as a whole
   if (k < .5) {
@@ -524,6 +567,37 @@ function compName(id) {
   const c = state.comps[id];
   return c ? (c.name[state.lang] || c.name.en || id) : id;
 }
+function compFr(id) {
+  const c = state.comps[id];
+  return c ? (c.name.fr || '') : '';
+}
+
+/* A laurel wreath drawn by us. Never a competition's own mark — we set their
+   name in their own language instead, which is a fact and costs nobody. */
+function crest(size, label, sub) {
+  const w = size, h = size;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 60 60" style="flex:0 0 auto">
+    <g fill="none" stroke="${C.crustDeep}" stroke-width="1.6" stroke-linecap="round">
+      <path d="M22 12 Q8 24 15 42 Q18 49 26 52"/>
+      <path d="M38 12 Q52 24 45 42 Q42 49 34 52"/>
+    </g>
+    <g fill="${C.crustDeep}" opacity=".85">
+      <ellipse cx="16.5" cy="20" rx="3.4" ry="1.9" transform="rotate(-46 16.5 20)"/>
+      <ellipse cx="12.6" cy="28" rx="3.4" ry="1.9" transform="rotate(-22 12.6 28)"/>
+      <ellipse cx="12.8" cy="36.5" rx="3.4" ry="1.9" transform="rotate(6 12.8 36.5)"/>
+      <ellipse cx="16.8" cy="44" rx="3.4" ry="1.9" transform="rotate(30 16.8 44)"/>
+      <ellipse cx="43.5" cy="20" rx="3.4" ry="1.9" transform="rotate(46 43.5 20)"/>
+      <ellipse cx="47.4" cy="28" rx="3.4" ry="1.9" transform="rotate(22 47.4 28)"/>
+      <ellipse cx="47.2" cy="36.5" rx="3.4" ry="1.9" transform="rotate(-6 47.2 36.5)"/>
+      <ellipse cx="43.2" cy="44" rx="3.4" ry="1.9" transform="rotate(-30 43.2 44)"/>
+    </g>
+    <circle cx="30" cy="9" r="2.6" fill="${C.crust}"/>
+    <text x="30" y="31" text-anchor="middle" font-family="Cormorant Garamond,Georgia,serif"
+          font-size="17" font-weight="700" fill="${C.crustDeep}">${label}</text>
+    <text x="30" y="42" text-anchor="middle" font-family="IBM Plex Mono,monospace"
+          font-size="7.5" letter-spacing="1" fill="${C.mute}">${sub}</text>
+  </svg>`;
+}
 
 function openPlace(p) {
   state.sel = p; render();
@@ -549,13 +623,25 @@ function openPlace(p) {
         <div class="lbl">${esc(T('best_at'))}</div>
         <div class="mono" style="font-size:9.5px;color:var(--mute)">${esc(T('wins', p.aw.length))}</div>
       </div>
-      <div style="margin-top:8px">${aw.map(a => `
+      ${p.aw.some(a => a.r === 1) ? (() => {
+        const w = p.aw.find(a => a.r === 1);
+        return `<div style="display:flex;align-items:center;gap:14px;margin-top:10px;padding:12px 13px;
+             border:1px solid ${C.crust};background:rgba(196,131,46,.08)">
+          ${crest(58, '1', String(w.y))}
+          <div style="min-width:0">
+            <div class="ser" style="font-size:15.5px;font-weight:600;line-height:1.2;color:${C.crustDeep}">${esc(compFr(w.c) || compName(w.c))}</div>
+            <div style="font-size:10.5px;color:var(--mute);margin-top:3px;line-height:1.35">${esc(compName(w.c))}</div>
+            <div class="mono" style="font-size:10px;color:${C.crustDeep};margin-top:4px">${esc(T('win_1st'))}${w.who ? ' · ' + esc(w.who) : ''}</div>
+          </div></div>`;
+      })() : ''}
+      <div style="margin-top:8px">${aw.filter(a => a.r !== 1).map(a => `
         <div class="aw">
-          <div class="awy">${a.r === 1 ? '<svg width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.6" fill="' + C.crust + '"/><text x="10" y="13.4" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="' + C.card + '">1</text></svg>' : String(a.y).slice(2)}</div>
-          <div class="awn">${esc(compName(a.c))}
-            ${a.r === 1 ? '<div class="mono" style="font-size:9px;color:var(--mute);margin-top:1px">' + a.y + '</div>' : ''}
+          <div class="awy">${String(a.y).slice(2)}</div>
+          <div class="awn">
+            <div class="ser" style="font-size:14px;font-weight:600;line-height:1.2">${esc(compFr(a.c) || compName(a.c))}</div>
+            <div style="font-size:9.5px;color:var(--mute);margin-top:2px">${esc(compName(a.c))}</div>
           </div>
-          <div class="${a.r === 1 ? 'first' : 'awr'}">${a.r === 1 ? esc(T('win_1st')) : esc(T('rank_n', a.r))}</div>
+          <div class="awr">${esc(T('rank_n', a.r))}</div>
         </div>`).join('')}
       </div>` : ''}
 
@@ -734,6 +820,10 @@ function openSettings() {
       Syndicat des Boulangers du Grand Paris<br>
       Grand Prix de la Baguette — Ville de Paris</div>
     <div class="small">${esc(T('no_ads'))}</div>
+    <div style="border:1px solid var(--line);background:var(--paper);padding:11px 12px;margin-top:11px">
+      <div class="lbl">${esc(T('personal'))}</div>
+      <div class="small" style="margin-top:5px">${esc(T('personal_note'))}</div>
+    </div>
 
     <div style="text-align:center;margin-top:26px">
       <svg width="34" height="12" viewBox="0 0 34 12" style="opacity:.5">
@@ -1094,11 +1184,12 @@ async function boot() {
   document.documentElement.lang = state.lang;
   $('#bootMsg').textContent = T('loading');
 
-  const [paris, places, comps, awards] = await Promise.all([
+  const [paris, places, comps, awards, streets] = await Promise.all([
     fetch('data/paris.json').then(r => r.json()),
     fetch('data/places.json').then(r => r.json()),
     fetch('data/competitions.json').then(r => r.json()).catch(() => ({ competitions: [] })),
-    fetch('data/awards.json').then(r => r.json()).catch(() => null)
+    fetch('data/awards.json').then(r => r.json()).catch(() => null),
+    fetch('data/streets.json').then(r => r.json()).catch(() => null)
   ]);
   await loadRecords();
 
@@ -1120,6 +1211,24 @@ async function boot() {
     return W;
   });
   state.paris = paris;
+
+  if (streets) {
+    const unpack = way => {
+      const n = way.length / 2, W = new Float64Array(way.length);
+      let px = 0, py = 0, x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      for (let i = 0; i < n; i++) {
+        px = i ? px + way[i * 2] : way[0];
+        py = i ? py + way[i * 2 + 1] : way[1];
+        const X = wx(px / streets.q), Y = wy(py / streets.q);
+        W[i * 2] = X; W[i * 2 + 1] = Y;
+        if (X < x0) x0 = X; if (X > x1) x1 = X;
+        if (Y < y0) y0 = Y; if (Y > y1) y1 = Y;
+      }
+      return { W, x0, x1, y0, y1 };
+    };
+    state.roads = streets.tiers.map(t => t.map(unpack));
+    state.green = streets.green.map(unpack);
+  } else { state.roads = null; state.green = null; }
 
   state.places = places.places;
   state.byId = {};
