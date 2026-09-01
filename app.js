@@ -2679,7 +2679,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v44';
+const BUILD = 'v45';
 const BOOT_AT = Date.now();
 
 async function boot() {
