@@ -1259,7 +1259,6 @@ function setLang(l) {
   document.documentElement.lang = l;
   $('#langbtn').textContent = l.toUpperCase();
   $('#tagline').textContent = T('tagline');
-  $('#bootMsg').textContent = T('loading');
   paintChips(); paintStrip(); paintTabs(); render();
 }
 $('#langbtn').onclick = openLangs;
@@ -2313,7 +2312,6 @@ function openWelcome() {
 async function boot() {
   try { state.lang = localStorage.getItem('miette.lang') || navLang(); } catch (e) { state.lang = navLang(); }
   document.documentElement.lang = state.lang;
-  $('#bootMsg').textContent = T('loading');
 
   const [paris, places, comps, awards, streets] = await Promise.all([
     fetch('data/paris.json').then(r => r.json()),
