@@ -32,7 +32,7 @@ const state = {
   diaryView: 'time', rankKind: 'all', tasteScope: 'all', rankView: 'list',
   kinds: [true, true, true, true],
   onlyAward: false, onlyOpen: false, onlyIndie: false,
-  onlyWish: false, onlyUnvisited: false, onlyChain: false,
+  onlyWish: false, onlyUnvisited: false, onlyChain: false, onlyVisited: false,
   awardComps: [], onlyWinner: false, onlyMulti: false, awardNat: null,
   cx: 0, cy: 0, k: 0.3, kMin: 0.05, kMax: 7,
   here: null, sel: null, ready: false
@@ -142,7 +142,8 @@ const COND = [
   { id: 'onlyIndie',     test: p => !p.b },
   { id: 'onlyChain',     test: p => !!p.b },
   { id: 'onlyWish',      test: p => !!state.wish[p.id] },
-  { id: 'onlyUnvisited', test: p => !(state.visits[p.id] || []).length }
+  { id: 'onlyUnvisited', test: p => !(state.visits[p.id] || []).length },
+  { id: 'onlyVisited',   test: p => !!(state.visits[p.id] || []).length }
 ];
 
 const ofKind = p => state.kinds[p.k];
@@ -1065,6 +1066,26 @@ function toast(msg) {
 }
 
 /* -------------------------------------------------------------- chrome */
+/* marks for the things that are not about what a shop sells */
+const MARK = {
+  glow: `<svg width="15" height="15" viewBox="0 0 16 16" style="flex:0 0 auto">
+    <circle cx="8" cy="8" r="7" fill="#E8A33A" opacity=".38"/>
+    <circle cx="8" cy="8" r="3.4" fill="currentColor"/></svg>`,
+  award: `<svg width="16" height="14" viewBox="0 0 18 15" fill="none" style="flex:0 0 auto">
+    <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+      <path d="M5 4 Q1.6 7.5 5 11"/><path d="M13 4 Q16.4 7.5 13 11"/></g>
+    <circle cx="9" cy="7.5" r="2.6" fill="currentColor"/>
+    <circle cx="9" cy="2" r="1.5" fill="currentColor"/></svg>`,
+  been: `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:0 0 auto">
+    <g stroke="currentColor" stroke-width="2.1" stroke-linecap="round">
+      <path d="M3.4 11.2 L6.2 5.6"/><path d="M6.8 12 L9.6 6.4"/><path d="M10.2 11.2 L13 5.6"/></g></svg>`,
+  steam: `<svg width="15" height="16" viewBox="0 0 16 17" fill="none" style="flex:0 0 auto">
+    <g stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+      <path d="M4.6 5.2c-.9-1 .6-1.9-.3-2.9M8 4.9c-.9-1 .6-1.9-.3-2.9M11.4 5.2c-.9-1 .6-1.9-.3-2.9"/>
+      <path d="M2.2 14.4c0-3.2 2.6-5.8 5.8-5.8s5.8 2.6 5.8 5.8z"/>
+      <path d="M1.4 14.4h13.2"/></g></svg>`
+};
+
 /* the same dots the map uses, so the row reads as its key */
 function kindDots(kinds, on) {
   const r = 3.4, gap = 8.6, w = kinds.length * gap;
@@ -1075,30 +1096,34 @@ function kindDots(kinds, on) {
 
 const TRADE = [T => T('f_bakery'), T => T('f_pastry'), T => T('f_choc'), T => T('f_bonbon')];
 
+function tradeChip(k) {
+  const on = state.kinds[k];
+  return `<button class="chip sub ${on ? 'on' : ''}" data-k="${k}"
+    style="border-color:${on ? KIND[k] : 'var(--line)'}">${kindDots([k], false)}${esc(TRADE[k](T))}</button>`;
+}
+function markChip(id, label, mark) {
+  const on = state[id];
+  return `<button class="tog ${on ? 'on' : ''}" data-t="${id}"
+    style="color:${on ? 'inherit' : C.ink2}">${MARK[mark]}${esc(label)}</button>`;
+}
+
 function paintChips() {
-  const cur = errandNow();
-  const F = [['all', T('g_all'), [0, 1, 2, 3]],
-             ['bread', T('g_bread'), [0, 1]],
-             ['sweet', T('g_sweet'), [2, 3]]];
-  // one layer: the three choices, each naming what it holds rather than offering
-  // to take it apart. Taking it apart lives in the sheet.
-  const picked = cur === null;
-  $('#chips').innerHTML = F.map(([v, l, ks]) => {
-    const on = cur === v;
-    const inside = v === 'all' ? '' : ks.map(k => TRADE[k](T)).join(' · ');
-    return `<button class="chip ${on ? 'on' : ''}" data-f="${v}"
-      style="display:flex;align-items:center;gap:6px">${kindDots(ks, on)}${esc(l)}
-      ${inside ? `<span style="font-size:10px;opacity:${on ? .8 : .62};font-weight:400">${esc(inside)}</span>` : ''}
-    </button>`;
-  }).join('') +
-    (picked ? `<button class="chip on" data-f="custom" style="display:flex;align-items:center;gap:6px">
-      ${kindDots([0, 1, 2, 3].filter(k => state.kinds[k]), true)}${esc(T('g_custom'))}</button>` : '');
-  const TICK2 = `<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor"
-      stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-7"/></svg>`;
-  const R2 = [['onlyOpen', T('f_open')], ['onlyAward', awardChipLabel()],
-              ['onlyIndie', T('f_indie')], ['onlyWish', T('wish')]];
-  $('#chips2').innerHTML = R2.map(([id, l]) =>
-    `<button class="tog ${state[id] ? 'on' : ''}" data-t="${id}">${state[id] ? TICK2 : ''}${esc(l)}</button>`).join('');
+  const all = state.kinds.every(Boolean);
+  // "everything" needs no icon — there is nothing to tell apart
+  $('#chips').innerHTML =
+    `<button class="chip ${all ? 'on' : ''}" data-f="all">${esc(T('g_all'))}</button>` +
+    `<div class="chipsep"></div>` +
+    markChip('onlyOpen', T('f_open'), 'glow');
+  // the groups are labels; the trades belonging to them are the buttons
+  $('#chips2').innerHTML =
+    `<span class="grouplbl">${esc(T('g_bread'))}</span>` + tradeChip(0) + tradeChip(1) +
+    `<div class="chipsep"></div>` +
+    `<span class="grouplbl">${esc(T('g_sweet'))}</span>` + tradeChip(2) + tradeChip(3);
+
+  $('#chips3').innerHTML =
+    markChip('onlyAward', awardChipLabel(), 'award') +
+    markChip('onlyVisited', T('f_visited'), 'been') +
+    markChip('onlyWish', T('wish'), 'steam');
 
   const n = condCount();
   $('#filterLbl').textContent = T('f_cond');
@@ -1110,29 +1135,34 @@ function paintChips() {
     else $('#filterBtn').insertAdjacentHTML('beforeend', `<b>${n}</b>`);
   } else if (badge) badge.remove();
 }
-$('#chips').addEventListener('click', e => {
-  const b = e.target.closest('.chip'); if (!b) return;
-  if (b.dataset.f === 'custom') { openFilters(); return; }
-  else setErrand(b.dataset.f);
+function onChipRow(e) {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.f) setErrand(b.dataset.f);
+  else if (b.dataset.k !== undefined) {
+    const i = +b.dataset.k;
+    const next = state.kinds.slice();
+    next[i] = !next[i];
+    if (next.some(Boolean)) state.kinds = next;   // never leave an empty map
+  } else if (b.dataset.t) {
+    const id = b.dataset.t;
+    state[id] = !state[id];
+    if (id === 'onlyVisited' && state.onlyVisited) state.onlyUnvisited = false;
+    if (id === 'onlyIndie' && state.onlyIndie) state.onlyChain = false;
+    if (id === 'onlyChain' && state.onlyChain) state.onlyIndie = false;
+    if (id === 'onlyOpen') {
+      paintChips(); paintStrip(); render();
+      if (state.onlyOpen) openNearby(); else closeSheets();
+      return;
+    }
+    if (id === 'onlyAward' && !state.onlyAward) {
+      state.awardComps = []; state.onlyWinner = false; state.onlyMulti = false; state.awardNat = null;
+    }
+  } else return;
   paintChips(); paintStrip(); render();
-});
-$('#chips2').addEventListener('click', e => {
-  const b = e.target.closest('.tog'); if (!b) return;
-  state[b.dataset.t] = !state[b.dataset.t];
-  // the two halves of one axis cannot both be true
-  if (b.dataset.t === 'onlyIndie' && state.onlyIndie) state.onlyChain = false;
-  if (b.dataset.t === 'onlyChain' && state.onlyChain) state.onlyIndie = false;
-  if (b.dataset.t === 'onlyOpen') {
-    paintChips(); paintStrip(); render();
-    if (state.onlyOpen) openNearby(); else closeSheets();
-    return;
-  }
-  if (b.dataset.t === 'onlyAward' && !state.onlyAward) {
-    state.awardComps = []; state.onlyWinner = false; state.onlyMulti = false;
-    state.awardNat = null;
-  }
-  paintChips(); paintStrip(); render();
-});
+}
+$('#chips').addEventListener('click', onChipRow);
+$('#chips3').addEventListener('click', onChipRow);
+$('#chips2').addEventListener('click', onChipRow);
 $('#filterBtn').onclick = openFilters;
 
 function awardChipLabel() {
