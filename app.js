@@ -43,9 +43,14 @@ const C = {
 };
 
 // one hue per trade — the map should say what a shop is before you read a word
-const KIND = ['#C4832E', '#A65B72', '#6E4A34', '#8E7098'];
+/* Lightness groups, hue separates.
+   The first palette had gold reading with cocoa and rose with plum — the colour
+   pairs ran across the families instead of with them, and plum said nothing about
+   sweets. Now the two bread trades are both light and warm, the two sweet trades
+   both deep, so the grouping is legible before any label is read. */
+const KIND = ['#C4832E', '#CE7150', '#6E4A34', '#7B4257'];
 // the same hues, dark enough to read at 11 px on paper
-const KIND_INK = ['#8C5216', '#7E3F53', '#553627', '#6B5177'];
+const KIND_INK = ['#8C5216', '#8E4327', '#553627', '#5E3040'];
 
 const state = {
   lang: 'ko', paris: null, places: [], comps: {},
@@ -1248,7 +1253,7 @@ function paintChips() {
   $('#chips2').innerHTML =
     field('rgba(196,131,46,.10)', 'rgba(196,131,46,.34)', T('g_bread'),
           tradeChip(0) + tradeChip(1)) +
-    field('rgba(126,99,140,.10)', 'rgba(126,99,140,.32)', T('g_sweet'),
+    field('rgba(110,74,52,.11)', 'rgba(110,74,52,.34)', T('g_sweet'),
           tradeChip(2) + tradeChip(3));
 
   $('#chips3').innerHTML =
@@ -2562,7 +2567,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v34';
+const BUILD = 'v36';
 const BOOT_AT = Date.now();
 
 async function boot() {
