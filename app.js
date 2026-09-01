@@ -235,9 +235,8 @@ function visible(p) {
   return true;
 }
 
-const condCount = () =>
-  COND.reduce((n, c) => n + (state[c.id] ? 1 : 0), 0) +
-  EMPH.reduce((n, e) => n + (state[e.id] ? 1 : 0), 0);
+// only what is hidden behind the button — the two on the row count themselves
+const condCount = () => COND.reduce((n, c) => n + (state[c.id] ? 1 : 0), 0);
 
 function errandNow() {
   for (const e of ERRAND) {
@@ -917,7 +916,7 @@ function openPlace(p) {
         <span>${esc(T('call'))}</span></button>` : ''}
       <button class="act" data-url="${esc(route)}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${C.ink2}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-8-8 19-2-8z"/></svg>
-        <span>${esc(T('route'))}</span></button>
+        <span>${esc(IOS ? T('route_ios') : T('route'))}</span></button>
       <button class="act" data-url="${esc(gmaps)}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${C.ink2}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/></svg>
         <span>${esc(T('gmaps'))}</span></button>
@@ -1383,7 +1382,8 @@ function openFilters() {
 
   const base = state.places.filter(ofKind);
   const condRow = (id, name, desc) => {
-    const c = COND.find(x => x.id === id);
+    const c = COND.concat(EMPH).find(x => x.id === id);
+    if (!c) return '';
     return `<div class="frow" data-c="${id}">
       <div class="fbox ${state[id] ? 'on' : ''}">${state[id] ? TICK : ''}</div>
       <div style="flex:1 1 auto;min-width:0">
@@ -1414,8 +1414,8 @@ function openFilters() {
       ${tradeRow(2, T('f_choc'))}${tradeRow(3, T('f_bonbon'))}
     </div>
 
-    <div class="fhead">${esc(T('f_cond'))}</div>
-    <div style="font-size:11px;color:var(--mute);margin-top:4px">${esc(T('f_cond_help'))}</div>
+    <div class="fhead">${esc(T('f_emph'))}</div>
+    <div style="font-size:11px;color:var(--mute);margin-top:4px">${esc(T('f_emph_help'))}</div>
     <div style="margin-top:4px">
       ${condRow('onlyOpen', T('f_open'), T('f_open_d'))}
       ${condRow('onlyAward', T('f_award'), T('f_award_d'))}
@@ -1456,6 +1456,11 @@ function openFilters() {
             <div class="fcount">${n}</div></div>`;
         }).join('')}
       </div>` : ''}
+    </div>
+
+    <div class="fhead">${esc(T('f_cond'))}</div>
+    <div style="font-size:11px;color:var(--mute);margin-top:4px">${esc(T('f_cond_help'))}</div>
+    <div style="margin-top:4px">
       ${condRow('onlyIndie', T('f_indie'), T('f_indie_d'))}
       ${condRow('onlyChain', T('f_chain'), T('f_chain_d'))}
       ${condRow('onlyWish', T('wish'), T('f_wish_d'))}
@@ -1495,7 +1500,14 @@ function openFilters() {
       const next = state.kinds.slice();
       next[i] = !next[i];
       if (next.some(Boolean)) state.kinds = next;   // never leave an empty map
-    } else if (c) state[c.dataset.c] = !state[c.dataset.c];
+    } else if (c) {
+      const id = c.dataset.c;
+      state[id] = !state[id];
+      if (id === 'onlyIndie' && state.onlyIndie) state.onlyChain = false;
+      if (id === 'onlyChain' && state.onlyChain) state.onlyIndie = false;
+      if (id === 'onlyVisited' && state.onlyVisited) state.onlyUnvisited = false;
+      if (id === 'onlyUnvisited' && state.onlyUnvisited) state.onlyVisited = false;
+    }
     else return;
     paintChips(); paintStrip(); render(); openFilters();
   };
@@ -1503,7 +1515,7 @@ function openFilters() {
     setErrand('all');
     state.awardComps = []; state.onlyWinner = false; state.onlyMulti = false;
     state.awardNat = null;
-    COND.forEach(c => { state[c.id] = false; });
+    COND.concat(EMPH).forEach(c => { state[c.id] = false; });
     paintChips(); paintStrip(); render(); openFilters();
   };
   $('#fDone').onclick = closeSheets;
@@ -2604,7 +2616,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v40';
+const BUILD = 'v42';
 const BOOT_AT = Date.now();
 
 async function boot() {
