@@ -22,11 +22,14 @@ const C = {
   olive: '#77794F', seine: '#9DAEAC'
 };
 
+// one hue per trade — the map should say what a shop is before you read a word
+const KIND = ['#C4832E', '#A65B72', '#6E4A34', '#8E7098'];
+
 const state = {
   lang: 'ko', paris: null, places: [], comps: {},
   visits: {}, wish: {}, meta: {},
   filter: 'all', onlyAward: false, onlyOpen: false, onlyIndie: false,
-  cx: 0, cy: 0, k: 0.3, kMin: 0.05, kMax: 3,
+  cx: 0, cy: 0, k: 0.3, kMin: 0.05, kMax: 7,
   here: null, sel: null, ready: false
 };
 
@@ -148,34 +151,90 @@ function render() {
     ctx.globalAlpha = 1;
   }
 
-  // the shops
-  const r = Math.max(1.4, Math.min(5, 1.3 + k * 5));
-  const pad = 20, seen = [];
-  ctx.beginPath();
+  // the shops — colour says the trade, filled-or-hollow says whether the door is open
+  const r = Math.max(1.6, Math.min(6, 1.4 + k * 5.6));
+  const pad = 24, seen = [], live = [];
   for (const p of state.places) {
     const x = sx(p.WX), y = sy(p.WY);
     if (x < -pad || x > VW + pad || y < -pad || y > VH + pad) continue;
     p.sx = x; p.sy = y; seen.push(p);
-    if (!visible(p) || state.visits[p.id] || state.wish[p.id]) continue;
-    ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, 6.284);
+    if (visible(p) && !state.visits[p.id]) live.push(p);
   }
-  ctx.fillStyle = C.ink; ctx.globalAlpha = .30; ctx.fill(); ctx.globalAlpha = 1;
 
-  // awarded shops carry a ring
-  ctx.beginPath();
-  for (const p of seen) {
-    if (!p.aw || !visible(p) || state.visits[p.id]) continue;
-    ctx.moveTo(p.sx + r + 2.2, p.sy); ctx.arc(p.sx, p.sy, r + 2.2, 0, 6.284);
-  }
-  ctx.strokeStyle = C.crust; ctx.lineWidth = 1.1; ctx.globalAlpha = .7; ctx.stroke(); ctx.globalAlpha = 1;
+  for (let kind = 0; kind < 4; kind++) {
+    // open — a solid dot
+    ctx.beginPath();
+    for (const p of live) {
+      if (p.k !== kind || p.O !== true) continue;
+      ctx.moveTo(p.sx + r, p.sy); ctx.arc(p.sx, p.sy, r, 0, 6.284);
+    }
+    ctx.fillStyle = KIND[kind]; ctx.globalAlpha = .92; ctx.fill();
 
-  // want-to-go — a hollow ring
-  ctx.beginPath();
-  for (const p of seen) {
-    if (!state.wish[p.id] || state.visits[p.id]) continue;
-    ctx.moveTo(p.sx + r + 2, p.sy); ctx.arc(p.sx, p.sy, r + 2, 0, 6.284);
+    // hours unknown — the same dot, quieter
+    ctx.beginPath();
+    for (const p of live) {
+      if (p.k !== kind || p.O !== null) continue;
+      ctx.moveTo(p.sx + r, p.sy); ctx.arc(p.sx, p.sy, r, 0, 6.284);
+    }
+    ctx.globalAlpha = .42; ctx.fill(); ctx.globalAlpha = 1;
+
+    // shut — an empty shutter
+    if (r > 2) {
+      ctx.beginPath();
+      for (const p of live) {
+        if (p.k !== kind || p.O !== false) continue;
+        ctx.moveTo(p.sx + r, p.sy); ctx.arc(p.sx, p.sy, r, 0, 6.284);
+      }
+      ctx.strokeStyle = KIND[kind]; ctx.lineWidth = Math.min(1.6, r * .5);
+      ctx.globalAlpha = .78; ctx.stroke(); ctx.globalAlpha = 1;
+    } else {
+      ctx.beginPath();
+      for (const p of live) {
+        if (p.k !== kind || p.O !== false) continue;
+        ctx.moveTo(p.sx + r, p.sy); ctx.arc(p.sx, p.sy, r, 0, 6.284);
+      }
+      ctx.globalAlpha = .34; ctx.fill(); ctx.globalAlpha = 1;
+    }
   }
-  ctx.strokeStyle = C.olive; ctx.lineWidth = 1.8; ctx.stroke();
+
+  // a laurel around the awarded — our own mark, never a competition's
+  if (r >= 2.4) {
+    const lr = r + 3.2;
+    ctx.strokeStyle = C.crustDeep; ctx.lineWidth = Math.min(1.6, r * .42);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (const p of live) {
+      if (!p.aw) continue;
+      ctx.moveTo(p.sx - lr, p.sy - lr * .58);
+      ctx.quadraticCurveTo(p.sx - lr * 1.42, p.sy, p.sx - lr, p.sy + lr * .58);
+      ctx.moveTo(p.sx + lr, p.sy - lr * .58);
+      ctx.quadraticCurveTo(p.sx + lr * 1.42, p.sy, p.sx + lr, p.sy + lr * .58);
+    }
+    ctx.globalAlpha = .85; ctx.stroke(); ctx.globalAlpha = 1;
+
+    // a laureate wears a seed above the laurel
+    if (r >= 3.4) {
+      ctx.beginPath();
+      for (const p of live) {
+        if (!p.aw || !p.aw.some(a => a.r === 1)) continue;
+        ctx.moveTo(p.sx + 1.5, p.sy - lr - 2.4); ctx.arc(p.sx, p.sy - lr - 2.4, 1.5, 0, 6.284);
+      }
+      ctx.fillStyle = C.crustDeep; ctx.fill();
+    }
+  }
+
+  // want-to-go — an outer ring, in the trade's own colour
+  for (let kind = 0; kind < 4; kind++) {
+    ctx.beginPath();
+    let any = false;
+    for (const p of seen) {
+      if (p.k !== kind || !state.wish[p.id] || state.visits[p.id]) continue;
+      any = true;
+      ctx.moveTo(p.sx + r + 3.4, p.sy); ctx.arc(p.sx, p.sy, r + 3.4, 0, 6.284);
+    }
+    if (!any) continue;
+    ctx.strokeStyle = C.olive; ctx.lineWidth = 1.8; ctx.stroke();
+  }
 
   // the trail, oldest to newest
   const walked = stampedInOrder();
@@ -215,11 +274,16 @@ function render() {
 
   if (state.here) {
     const x = sx(state.here.x), y = sy(state.here.y);
-    ctx.beginPath(); ctx.arc(x, y, 10, 0, 6.284);
-    ctx.fillStyle = C.seine; ctx.globalAlpha = .22; ctx.fill(); ctx.globalAlpha = 1;
-    ctx.beginPath(); ctx.arc(x, y, 4.2, 0, 6.284);
+    if (state.here.acc) {
+      const ar = Math.max(10, (state.here.acc / 111320) * S * k);
+      ctx.beginPath(); ctx.arc(x, y, Math.min(ar, 160), 0, 6.284);
+      ctx.fillStyle = C.seine; ctx.globalAlpha = .13; ctx.fill();
+      ctx.globalAlpha = .3; ctx.strokeStyle = C.seine; ctx.lineWidth = 1; ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    ctx.beginPath(); ctx.arc(x, y, 6.4, 0, 6.284);
     ctx.fillStyle = C.seine; ctx.fill();
-    ctx.strokeStyle = C.card; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.strokeStyle = C.card; ctx.lineWidth = 2.2; ctx.stroke();
   }
 
   if (k > .55) labels(seen, k);
@@ -287,11 +351,33 @@ const cap = s => s.charAt(0).toUpperCase() + s.slice(1, 2).toLowerCase();
 const mins = t => { const [a, b] = t.split(':').map(Number); return a * 60 + b; };
 const hhmm = m => String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
 
+// the shops keep Paris hours; the phone may be anywhere
+function parisNow() {
+  try {
+    return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+  } catch (e) { return new Date(); }
+}
+const AWAY = (() => {
+  try {
+    return (Intl.DateTimeFormat().resolvedOptions().timeZone || '') !== 'Europe/Paris';
+  } catch (e) { return false; }
+})();
+function parisClock() {
+  const d = parisNow(), q = n => String(n).padStart(2, '0');
+  return q(d.getHours()) + ':' + q(d.getMinutes());
+}
+
+const HCACHE = new Map();
+function hoursOf(h) {
+  if (!h) return null;
+  if (!HCACHE.has(h)) HCACHE.set(h, parseHours(h));
+  return HCACHE.get(h);
+}
 function openNow(h, now) {
-  const P = parseHours(h);
+  const P = hoursOf(h);
   if (!P) return null;
   if (P.always) return true;
-  now = now || new Date();
+  now = now || parisNow();
   const d = now.getDay(), t = now.getHours() * 60 + now.getMinutes();
   let known = false;
   for (const r of P.rules) {
@@ -303,9 +389,9 @@ function openNow(h, now) {
 }
 
 function hoursLine(h) {
-  const P = parseHours(h);
+  const P = hoursOf(h);
   if (!P) return { text: T('no_hours'), open: null, off: '' };
-  const now = new Date(), d = now.getDay(), t = now.getHours() * 60 + now.getMinutes();
+  const now = parisNow(), d = now.getDay(), t = now.getHours() * 60 + now.getMinutes();
   let closeAt = null, nextOpen = null;
   for (const r of P.rules) {
     if (!r.days.has(d)) continue;
@@ -482,6 +568,8 @@ function openPlace(p) {
       <div style="flex:1 1 auto"></div>
       ${hl.off ? '<div class="mono" style="font-size:10.5px;color:var(--mute)">' + esc(hl.off) + '</div>' : ''}
     </div>
+    ${AWAY && hl.open !== null ? '<div class="mono" style="font-size:9.5px;color:var(--mute);margin-top:6px">' +
+      esc(T('paris_time', parisClock())) + '</div>' : ''}
 
     <div class="acts">
       ${p.t ? `<a class="act" href="tel:${esc(p.t.replace(/\s/g, ''))}">
@@ -772,17 +860,81 @@ $('#langbtn').onclick = openSettings;
 $('#wordmark').onclick = openSettings;
 
 $('#zoomAll').onclick = () => { fitAll(); render(); };
-$('#locate').onclick = () => {
-  if (!navigator.geolocation) return toast(T('load_fail'));
-  navigator.geolocation.getCurrentPosition(pos => {
+$('#legendBtn').onclick = openLegend;
+
+function openLegend() {
+  const swatch = (i) => `<span style="display:inline-flex;width:14px;height:14px;border-radius:8px;background:${KIND[i]};flex:0 0 auto"></span>`;
+  const row = (mark, label) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--divider)">
+      <div style="width:34px;display:flex;justify-content:center;flex:0 0 auto">${mark}</div>
+      <div style="font-size:12px;color:var(--ink2)">${esc(label)}</div></div>`;
+  const dot = (fill, hollow) => `<svg width="26" height="26" viewBox="0 0 26 26">
+      <circle cx="13" cy="13" r="6" ${hollow ? `fill="none" stroke="${fill}" stroke-width="2"` : `fill="${fill}"`}/></svg>`;
+  $('#setSheet').onclick = null;
+  $('#setSheet').innerHTML = `
+    <div class="grip"></div>
+    <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('legend'))}</div>
+
+    <div class="lbl" style="margin-top:18px">${esc(T('legend_kind'))}</div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin-top:10px">
+      ${[0, 1, 2, 3].map(i => `<div style="display:flex;align-items:center;gap:8px">
+        ${swatch(i)}<div style="font-size:12px">${esc(T('kind')[i])}</div></div>`).join('')}
+    </div>
+
+    <div class="lbl" style="margin-top:20px">${esc(T('legend_hours'))}</div>
+    <div style="margin-top:6px">
+      ${row(dot(C.crust, false), T('legend_open'))}
+      ${row(dot(C.crust, true), T('legend_shut'))}
+      ${row(`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="6" fill="${C.crust}" opacity=".42"/></svg>`, T('legend_unknown'))}
+    </div>
+
+    <div class="lbl" style="margin-top:20px">${esc(T('legend_marks'))}</div>
+    <div style="margin-top:6px">
+      ${row(`<svg width="30" height="26" viewBox="0 0 30 26"><circle cx="15" cy="13" r="5" fill="${C.crust}"/>
+        <g fill="none" stroke="${C.crustDeep}" stroke-width="1.5" stroke-linecap="round">
+        <path d="M7.4 8.6 Q3.6 13 7.4 17.4"/><path d="M22.6 8.6 Q26.4 13 22.6 17.4"/></g>
+        <circle cx="15" cy="3.6" r="1.7" fill="${C.crustDeep}"/></svg>`, T('legend_award'))}
+      ${row(`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="5" fill="${C.crust}" opacity=".5"/>
+        <circle cx="13" cy="13" r="9" fill="none" stroke="${C.olive}" stroke-width="1.8"/></svg>`, T('legend_wish'))}
+      ${row(`<svg width="30" height="26" viewBox="0 0 30 26">
+        <circle cx="12" cy="13" r="6.4" fill="${C.crust}" opacity=".5"/>
+        <circle cx="16" cy="13" r="6.4" fill="${C.crust}" opacity=".8"/>
+        <circle cx="14" cy="13" r="9.6" fill="none" stroke="${C.crustDeep}" stroke-width="1" opacity=".5"/></svg>`, T('legend_stamp'))}
+      ${row(`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="${C.seine}" opacity=".16"/>
+        <circle cx="13" cy="13" r="5" fill="${C.seine}" stroke="${C.card}" stroke-width="2"/></svg>`, T('legend_here'))}
+    </div>
+    <div class="small">${esc(T('legend_note'))}</div>`;
+  show('setSheet');
+}
+let watchId = null;
+function startWatch(recentre) {
+  if (!navigator.geolocation) { toast(T('geo_no')); return; }
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  let first = true;
+  watchId = navigator.geolocation.watchPosition(pos => {
     const x = wx(pos.coords.longitude), y = wy(pos.coords.latitude);
-    state.here = { x, y };
+    state.here = { x, y, acc: pos.coords.accuracy || 0 };
     const b = state.bounds;
-    if (Math.abs(x - b.cx) < b.w && Math.abs(y - b.cy) < b.h) {
-      state.cx = x; state.cy = y; state.k = Math.max(state.k, 0.5);
+    const inParis = Math.abs(x - b.cx) < b.w * .9 && Math.abs(y - b.cy) < b.h * .9;
+    if ((first && recentre) || state.follow) {
+      if (inParis) { state.cx = x; state.cy = y; if (first) state.k = Math.max(state.k, 1.1); }
+      else if (first && recentre) toast(T('geo_far'));
     }
+    first = false;
     clampView(); render();
-  }, () => toast(T('load_fail')), { enableHighAccuracy: true, timeout: 8000 });
+  }, err => {
+    state.follow = false; paintLocateBtn();
+    toast(err.code === 1 ? T('geo_denied') : T('geo_no'));
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 });
+}
+function paintLocateBtn() {
+  $('#locate').style.borderColor = state.follow ? C.seine : C.line;
+  $('#locate').style.background = state.follow ? 'rgba(157,174,172,.18)' : C.card;
+}
+$('#locate').onclick = () => {
+  state.follow = !state.follow;
+  paintLocateBtn();
+  if (state.follow) startWatch(true);
+  render();
 };
 
 
@@ -978,13 +1130,15 @@ async function boot() {
     y0 = Math.min(y0, p.WY); y1 = Math.max(y1, p.WY);
   }
   state.bounds = { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
+  refreshHours();
+  setInterval(() => { refreshHours(); if (state.ready) render(); }, 60000);
   (comps.competitions || []).forEach(c => { state.comps[c.id] = c; });
   state.awards = awards && awards.competitions && awards.competitions[0]
     ? awards.competitions[0].winners : [];
 
   resize();
   fitAll();
-  state.k = Math.min(state.kMax, state.kMin * 2.6);   // open close enough to read names
+  state.k = Math.min(state.kMax, state.kMin * 5.2);   // open on a walkable district
   state.ready = true;
   paintChips(); paintStrip(); paintTabs();
   $('#langbtn').textContent = state.lang.toUpperCase();
@@ -1001,6 +1155,11 @@ const navLang = () => {
   const l = (navigator.language || 'ko').slice(0, 2).toLowerCase();
   return ['ko', 'en', 'fr'].includes(l) ? l : 'ko';
 };
+
+function refreshHours() {
+  const now = parisNow();
+  for (const p of state.places) p.O = p.h ? openNow(p.h, now) : null;
+}
 
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', () => setTimeout(resize, 260));
