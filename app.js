@@ -6,6 +6,13 @@
 /* ------------------------------------------------------------------ basics */
 const $ = s => document.querySelector(s);
 
+/* One missing element should cost one button, not the whole script. */
+function on(sel, ev, fn) {
+  const el = $(sel);
+  if (el) el.addEventListener(ev, fn);
+  return el;
+}
+
 const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
@@ -1144,7 +1151,7 @@ async function exportRecords() {
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 800);
 }
 
-$('#fileIn').addEventListener('change', async e => {
+on('#fileIn', 'change', async e => {
   const f = e.target.files && e.target.files[0]; if (!f) return;
   try {
     const d = JSON.parse(await f.text());
@@ -1277,25 +1284,19 @@ function onChipRow(e) {
     if (id === 'onlyVisited' && state.onlyVisited) state.onlyUnvisited = false;
     if (id === 'onlyIndie' && state.onlyIndie) state.onlyChain = false;
     if (id === 'onlyChain' && state.onlyChain) state.onlyIndie = false;
-    if (id === 'onlyOpen') {
-      paintChips(); paintStrip(); render();
-      if (state.onlyOpen) openNearby(); else closeSheets();
-      return;
-    }
     if (id === 'onlyAward' && !state.onlyAward) {
       state.awardComps = []; state.onlyWinner = false; state.onlyMulti = false; state.awardNat = null;
     }
   } else return;
   paintChips(); paintStrip(); render();
 }
-$('#chips3').addEventListener('click', onChipRow);
-$('#lamp').onclick = () => {
+on('#chips3', 'click', onChipRow);
+on('#lamp', 'click', () => {
   state.onlyOpen = !state.onlyOpen;
   paintChips(); paintStrip(); render();
-  if (state.onlyOpen) openNearby(); else closeSheets();
-};
-$('#chips2').addEventListener('click', onChipRow);
-$('#filterBtn').onclick = openFilters;
+});
+on('#chips2', 'click', onChipRow);
+on('#filterBtn', 'click', openFilters);
 
 function awardChipLabel() {
   if (state.awardComps.length === 1) return compShort(state.awardComps[0]);
@@ -1490,7 +1491,7 @@ function paintTabs() {
            stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>
       <span>${esc(label)}</span></button>`).join('');
 }
-$('#tabs').addEventListener('click', e => {
+on('#tabs', 'click', e => {
   const b = e.target.closest('.tab'); if (!b) return;
   const t = b.dataset.tab;
   document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
@@ -1512,11 +1513,11 @@ function setLang(l) {
   $('#searchFieldLbl').textContent = T('s_ph');
   paintChips(); paintStrip(); paintTabs(); render();
 }
-$('#langbtn').onclick = openLangs;
-$('#wordmark').onclick = openSettings;
+on('#langbtn', 'click', openLangs);
+on('#wordmark', 'click', openSettings);
 
-$('#zoomAll').onclick = () => { fitAll(); render(); };
-$('#legendBtn').onclick = openLegend;
+on('#zoomAll', 'click', () => { fitAll(); render(); });
+on('#legendBtn', 'click', openLegend);
 /* metres, from the world units the map is drawn in */
 const metres = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by) / S * 111320;
 const walk = m => Math.max(1, Math.round(m / 80));      // 80 m a minute, unhurried
@@ -1524,68 +1525,6 @@ function dist(m) {
   return m < 950 ? Math.round(m / 10) * 10 + ' m' : (m / 1000).toFixed(1) + ' km';
 }
 
-function openNearby() {
-  const from = state.here || { x: state.cx, y: state.cy };
-  const rows = state.places
-    .filter(q => q.O === true && ofKind(q) &&
-      (!state.onlyAward || awardOk(q)) && (!state.onlyIndie || !q.b) &&
-      (!state.onlyWish || state.wish[q.id]) &&
-      (!state.onlyUnvisited || !(state.visits[q.id] || []).length))
-    .map(q => ({ q, m: metres(from.x, from.y, q.WX, q.WY) }))
-    .sort((a, b) => a.m - b.m);
-  const total = rows.length;
-  const shown = rows.slice(0, 60);
-
-  const body = shown.length ? shown.map(({ q, m }) => `
-    <div class="aw" data-id="${esc(q.id)}">
-      <svg width="16" height="16" viewBox="0 0 16 16" style="flex:0 0 auto">
-        <circle cx="8" cy="8" r="7.5" fill="${C.glow}" opacity=".30"/>
-        <circle cx="8" cy="8" r="4.2" fill="${KIND[q.k]}"/></svg>
-      <div style="flex:1 1 auto;min-width:0">
-        <div class="ser" style="font-size:15px;font-weight:600;line-height:1.2;
-             overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(q.n)}</div>
-        <div class="mono" style="font-size:9.5px;color:var(--mute);margin-top:2px;
-             overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(q.s || T('no_addr'))} · ${q.a}e</div>
-      </div>
-      ${q.aw ? `<svg width="16" height="14" viewBox="0 0 16 14" style="flex:0 0 auto">
-        <g fill="none" stroke="${C.crustDeep}" stroke-width="1.3" stroke-linecap="round">
-        <path d="M4.6 3.4 Q1.4 7 4.6 10.6"/><path d="M11.4 3.4 Q14.6 7 11.4 10.6"/></g>
-        <circle cx="8" cy="7" r="2.3" fill="${C.crust}"/></svg>` : ''}
-      <div style="flex:0 0 auto;text-align:right">
-        <div class="mono" style="font-size:11.5px;color:${C.crustDeep};font-weight:500">${esc(dist(m))}</div>
-        <div class="mono" style="font-size:9px;color:var(--mute);margin-top:1px">${esc(T('o_min', walk(m)))}</div>
-      </div>
-    </div>`).join('')
-    : `<div style="text-align:center;padding:44px 0 24px">
-        <div style="font-size:13px;font-weight:600">${esc(T('o_none'))}</div>
-        <div style="font-size:11.5px;color:var(--mute);margin-top:6px;line-height:1.55">${esc(T('o_none_d'))}</div></div>`;
-
-  $('#setSheet').onclick = null;
-  $('#setSheet').innerHTML = `
-    <div class="grip"></div>
-    <div style="display:flex;align-items:baseline;justify-content:space-between">
-      <div class="ser" style="font-size:22px;font-weight:600;letter-spacing:1px">${esc(T('o_title'))}</div>
-      <div class="mono" style="font-size:10.5px;color:var(--mute)">${esc(T('s_count', total))}</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-      <div style="width:6px;height:6px;border-radius:3px;background:${state.here ? C.seine : C.faint}"></div>
-      <div style="font-size:11px;color:var(--mute)">${esc(state.here ? T('o_near') : T('o_center'))}</div>
-    </div>
-    ${state.here ? '' : `<button class="cta ghost" style="margin-top:11px" id="nbLocate">${esc(T('o_locate'))}</button>`}
-    <div class="mono" style="font-size:9.5px;color:var(--mute);margin-top:10px">${esc(T('paris_time', parisClock()))}</div>
-    <div style="margin-top:4px">${body}</div>
-    ${total > shown.length ? `<div class="mono" style="font-size:9.5px;color:var(--mute);
-      text-align:center;margin-top:12px">${esc(T('o_more', total - shown.length))}</div>` : ''}`;
-
-  $('#setSheet').onclick = e => {
-    const row = e.target.closest('[data-id]'); if (!row) return;
-    const q = state.byId[row.dataset.id]; if (!q) return;
-    focusPlace(q, 1.6); render(); openPlace(q);
-  };
-  const lb = $('#nbLocate');
-  if (lb) lb.onclick = () => { state.follow = true; paintLocateBtn(); startWatch(true); };
-  show('setSheet');
-}
 function paintOpenBtn() { /* the open-now switch lives on the chip row now */ }
 
 function openLegend() {
@@ -1652,7 +1591,6 @@ function startWatch(recentre) {
     }
     first = false;
     clampView(); render();
-    if ($('#setSheet').classList.contains('open') && state.onlyOpen) openNearby();
   }, err => {
     state.follow = false; paintLocateBtn();
     toast(err.code === 1 ? T('geo_denied') : T('geo_no'));
@@ -1662,12 +1600,12 @@ function paintLocateBtn() {
   $('#locate').style.borderColor = state.follow ? C.seine : C.line;
   $('#locate').style.background = state.follow ? 'rgba(157,174,172,.18)' : C.card;
 }
-$('#locate').onclick = () => {
+on('#locate', 'click', () => {
   state.follow = !state.follow;
   paintLocateBtn();
   if (state.follow) startWatch(true);
   render();
-};
+});
 
 
 /* ------------------------------------------------------------- what she ate */
@@ -2535,16 +2473,16 @@ function openSearch() {
 }
 function closeSearch() { $('#search').classList.remove('on'); }
 
-$('#searchField').onclick = openSearch;
-$('#searchBack').onclick = closeSearch;
-$('#searchClear').onclick = () => { $('#searchIn').value = ''; paintSearch(); $('#searchIn').focus(); };
-$('#searchIn').addEventListener('input', paintSearch);
-$('#searchIn').addEventListener('keydown', e => {
+on('#searchField', 'click', openSearch);
+on('#searchBack', 'click', closeSearch);
+on('#searchClear', 'click', () => { $('#searchIn').value = ''; paintSearch(); $('#searchIn').focus(); });
+on('#searchIn', 'input', paintSearch);
+on('#searchIn', 'keydown', e => {
   if (e.key !== 'Enter') return;
   const first = $('#searchOut').querySelector('[data-sid]');
   if (first) first.click();
 });
-$('#searchOut').addEventListener('click', e => {
+on('#searchOut', 'click', e => {
   const b = e.target.closest('[data-sid]'); if (!b) return;
   const q = state.byId[b.dataset.sid]; if (!q) return;
   closeSearch();
@@ -2624,7 +2562,7 @@ function openWelcome() {
 }
 
 /* -------------------------------------------------------------------- boot */
-const BUILD = 'v32';
+const BUILD = 'v34';
 const BOOT_AT = Date.now();
 
 async function boot() {
@@ -2704,7 +2642,8 @@ async function boot() {
   // on a warm cache the data is back in 80 ms and the tower never gets seen
   const held = Math.max(0, 1500 - (Date.now() - BOOT_AT));
   setTimeout(() => {
-    $('#boot').classList.add('fading');
+    window.__miette_ok = true;
+  $('#boot').classList.add('fading');
     setTimeout(() => $('#boot').classList.add('gone'), 760);
     if (!state.meta.seen) setTimeout(openWelcome, 300);
   }, held);
@@ -2728,7 +2667,9 @@ window.addEventListener('orientationchange', () => setTimeout(resize, 260));
 
 boot().catch(err => {
   console.error(err);
-  $('#bootMsg').textContent = T('load_fail');
+  const m = $('#bootMsg'), f = $('#bootFix');
+  if (m) m.textContent = T('load_fail');
+  if (f) f.className = 'show';
 });
 
 if ('serviceWorker' in navigator) {
